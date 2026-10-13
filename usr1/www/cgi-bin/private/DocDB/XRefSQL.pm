@@ -86,8 +86,8 @@ sub InsertXRefs (%) {
       $Update -> execute($Version,$DocXRefID);
     }  
     if ($DocXRefID && $ExtProject) {
-      my $Update = $dbh -> prepare("update DocXRef set Project=\"$ExtProject\" where DocXRefID=$DocXRefID");
-      $Update -> execute();
+      my $Update = $dbh -> prepare("update DocXRef set Project=? where DocXRefID=?");
+      $Update -> execute($ExtProject,$DocXRefID);
     }  
   }
       

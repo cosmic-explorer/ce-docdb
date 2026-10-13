@@ -5,9 +5,6 @@
 #              changes in e-mail.
 #
 
-open(STDERR, ">>", "/tmp/errlog.log");
-open (DEBUG, ">>/tmp/debug");
-
 use CGI;
 use DBI;
 use CGI::Carp;
@@ -35,13 +32,6 @@ chomp($RemoteUser);
 use constant request_uri => $ENV{URI};
 use constant authnz_remote_user => $RemoteUser;
 
-print DEBUG "User: '$RemoteUser'\n";
-print DEBUG   "      Time: ".(localtime)."\n";
-foreach $key (keys %ENV) {
-  print DEBUG "$key = $ENV{$key}\n";
-}
-print DEBUG "\n";
-
 my $Filename = $web_root.&request_uri;
 
 $dbh   = DBI->connect('DBI:mysql:'.$db_name.':'.$db_host, $db_rwuser, $db_rwpass);
@@ -56,7 +46,6 @@ our $GLOBAL_EMAILUSER = $EmailUser;
 
 my $CanAccessRev = CanAccessRevision($DocRevID, $EmailUser);
 
-#close(DEBUG);
 if ($CanAccessRev) {
    exit(0);
 } 

@@ -93,7 +93,7 @@ sub AddFiles (%) {
                             -main        => $Files{$File}{Main},
                             -description => $Files{$File}{Description});
       my $full_file = "$Directory$ShortName";
-      system (" $IncrementalContentSearch \"$full_file\" > /dev/null &" );
+      RunIncrementalIndexer($full_file);
 
       push @FileIDs,$FileID;
     }

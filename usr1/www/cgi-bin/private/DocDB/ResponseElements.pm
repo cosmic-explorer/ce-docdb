@@ -32,8 +32,9 @@ require "DocumentSQL.pm";  #FIXME: Remove, move references to correct place
 
 sub PrintTitle {
   my ($Title) = @_;
+  require HTML::Entities;
   if ($Title) {
-    print "<h1>$Title</h1>\n";
+    print "<h1>".HTML::Entities::encode($Title)."</h1>\n";
   } else {
     print "<h1><b>Title:</b> none<br></h1>\n";
   }

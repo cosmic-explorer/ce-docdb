@@ -80,6 +80,11 @@ sub LocalSearch ($) {
   $FileDescSearchMode     = $params{filedescsearchmode};
   $FileContSearch         = $params{filecontsearch};
   $FileContSearchMode     = $params{filecontsearchmode};
+  # Only the four modes the glimpse wrapper understands are allowed; the value
+  # is passed to an external program, so anything else is rejected outright.
+  unless (defined $FileContSearchMode && $FileContSearchMode =~ /^(allword|anyword|allsub|anysub)$/) {
+    $FileContSearchMode = "anysub";
+  }
 
   my $AuthorManual        = $params{authormanual};
   my $RequesterManual     = $params{requestersmanual};
@@ -114,14 +119,14 @@ sub LocalSearch ($) {
   ###
   ### Work in progress.
   ###
-  $SimpleText         =~ s/[\'\"%_;]/\\$&/g;
+  $SimpleText         =~ s/[\\\'\"%_;]/\\$&/g;
   $NumberSearch       =~ s/[^\s\w+-\.]//go;
-  $TitleSearch        =~ s/[\'\"%_;]/\\$&/g;
-  $AbstractSearch     =~ s/[\'\"%_;]/\\$&/g;
-  $KeywordSearch      =~ s/[\'\"%_;]/\\$&/g;
+  $TitleSearch        =~ s/[\\\'\"%_;]/\\$&/g;
+  $AbstractSearch     =~ s/[\\\'\"%_;]/\\$&/g;
+  $KeywordSearch      =~ s/[\\\'\"%_;]/\\$&/g;
   $RevisionNoteSearch =~ s/[^\s\w+-\.]//go;
   $PubInfoSearch      =~ s/[^\s\w+-\.]//go;
-  $FileSearch         =~ s/[\'\"%_;]/\\$&/g;
+  $FileSearch         =~ s/[\\\'\"%_;]/\\$&/g;
   $FileDescSearch     =~ s/[^\s\w+-\.]//go;
   $FileContSearch     =~ s/[^\s\w+-\.]//go;
 
@@ -458,11 +463,10 @@ sub LocalSearch ($) {
      $SearchedContent = 1;
      my %ContentDocumentIDs = ();
 
-     my $SearchEngine = qq("$FileContSearch");
-
-     $SearchString = "$ContentSearch $SearchEngine $FileContSearchMode";
-
-     open SEARCH," $SearchString |";
+     # List-form open: arguments go straight to the wrapper, no shell involved.
+     unless (open(SEARCH, "-|", $ContentSearch, $FileContSearch, $FileContSearchMode)) {
+        push @WarnStack,"The file content search engine could not be started.";
+     }
 
      while ($Line = <SEARCH>) {
         $TmpLine = $Line;

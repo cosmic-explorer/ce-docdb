@@ -214,18 +214,24 @@ sub FileLink ($) {
   }
   
   my $Link = "";
-  
+
+  # Descriptions and names are user supplied; encode them for HTML.
+  require HTML::Entities;
+  my $SafeDescription = HTML::Entities::encode($Description);
+  my $SafeShortName   = HTML::Entities::encode($ShortName);
+  my $SafePrintedName = HTML::Entities::encode($PrintedName);
+
   if ($Format eq "short") {
     if ($Description) {
-      return "<a href=\"$URL\" title=\"$ShortName\">$Description</a>";
+      return "<a href=\"$URL\" title=\"$SafeShortName\">$SafeDescription</a>";
     } else {
-      return "<a href=\"$URL\" title=\"$ShortName\">$PrintedName</a>";
+      return "<a href=\"$URL\" title=\"$SafeShortName\">$SafePrintedName</a>";
     }
   } else {
     if ($Description) {
-      return "<a href=\"$URL\" title=\"$ShortName\">$Description</a> ($PrintedName, $FileSize)";
+      return "<a href=\"$URL\" title=\"$SafeShortName\">$SafeDescription</a> ($SafePrintedName, $FileSize)";
     } else {
-      return "<a href=\"$URL\" title=\"$ShortName\">$PrintedName</a> ($FileSize)";
+      return "<a href=\"$URL\" title=\"$SafeShortName\">$SafePrintedName</a> ($FileSize)";
     }
   }
 }

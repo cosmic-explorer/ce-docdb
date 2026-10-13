@@ -130,7 +130,7 @@ sub AddDocument {
     my @files = sort keys %Files;
     foreach my $File (@files) {
           my $full_file = FullFile ($DocumentID,$NewVersion,$File);
-          system (" $IncrementalContentSearch \"$full_file\" > /dev/null &");
+          RunIncrementalIndexer($full_file);
     }
 
     if (@SignOffIDs) {

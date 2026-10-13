@@ -370,8 +370,14 @@ sub ProcessUpload ($$) {
   my ($new_dir,$long_file) = @_;
 
   my $short_file = basename($long_file);
- 
+
+  # Refuse to write anything whose name fails the sanity check; the name is
+  # later used in a file path and passed to the content indexer.
+  my $ErrorsBefore = scalar(@ErrorStack);
   &FileNameSanityCheck($short_file);
+  if (scalar(@ErrorStack) > $ErrorsBefore) {
+    return "";
+  }
   open (OUTFILE,">$new_dir/$short_file");
   while ($bytes_read = read($long_file,$buffer,1024)) {
     print OUTFILE $buffer
@@ -400,6 +406,22 @@ sub FileNameSanityCheck ($) {
      push @ErrorStack, "The Filename you provided has no alphanumeric characters. Please change the file name and try again.";
   }
   return "";
+}
+
+# Run the incremental content indexer on one file in the background without
+# a shell: the file name is passed as a single argument via exec.
+sub RunIncrementalIndexer ($) {
+  my ($FullFile) = @_;
+  return unless ($IncrementalContentSearch && -e $FullFile);
+  my $pid = fork;
+  return unless defined $pid;
+  if ($pid == 0) {
+    open STDIN,  "<", "/dev/null";
+    open STDOUT, ">", "/dev/null";
+    open STDERR, ">", "/dev/null";
+    exec($IncrementalContentSearch, $FullFile) or exit 1;
+  }
+  return;
 }
 
 sub CopyFile ($$$$) {

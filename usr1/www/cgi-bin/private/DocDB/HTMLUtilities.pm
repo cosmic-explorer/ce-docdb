@@ -63,7 +63,8 @@ sub DocDBHeader {
   print "<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>" ;
 
   print '<meta http-equiv="Content-Type" content="text/html; charset='.$HTTP_ENCODING.'" />',"\n";
-  print "<title>$Title</title>\n";
+  require HTML::Entities;
+  print "<title>".HTML::Entities::encode($Title)."</title>\n";
 
   # Include DocDB style sheets
   

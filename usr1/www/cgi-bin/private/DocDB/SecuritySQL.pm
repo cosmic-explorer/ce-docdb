@@ -175,10 +175,8 @@ sub SecurityLookup {
 sub FetchEmailUserIDFromEmailAddress($) {
   my ($EmailAddress) = @_;
 
-  my $query = qq( select EmailUserID from EmailUser where EmailAddress like ("$EmailAddress"));
-
-  my $UserFetch =  $dbh->prepare($query);
-  $UserFetch -> execute();
+  my $UserFetch =  $dbh->prepare("select EmailUserID from EmailUser where EmailAddress = ?");
+  $UserFetch -> execute($EmailAddress);
   my ($EmailUserID) = $UserFetch -> fetchrow_array;
 
   return $EmailUserID;
@@ -192,10 +190,8 @@ sub FetchEmailUserIDFromRemoteUser() {
   my $EmailUserID = $GLOBAL_EMAILUSER || 0;
 
   if (defined $RemoteUser && length $RemoteUser > 0) {
-     my $query = qq( select EmailUserID from RemoteUser where RemoteUserName like ("$RemoteUser"));
-
-     my $UserFetch =  $dbh->prepare($query);
-     $UserFetch -> execute();
+     my $UserFetch =  $dbh->prepare("select EmailUserID from RemoteUser where RemoteUserName = ?");
+     $UserFetch -> execute($RemoteUser);
      $EmailUserID = $UserFetch -> fetchrow_array;
   }
 
@@ -207,10 +203,8 @@ sub FetchEmailUserIDFromRemoteUserName($) {
   require "Utilities.pm";
   my ($RemoteUser) =  @_;
 
-  my $query = qq( select EmailUserID from RemoteUser where RemoteUserName like ("$RemoteUser"));
-
-  my $UserFetch =  $dbh->prepare($query);
-  $UserFetch -> execute();
+  my $UserFetch =  $dbh->prepare("select EmailUserID from RemoteUser where RemoteUserName = ?");
+  $UserFetch -> execute($RemoteUser);
   my ($EmailUserID) = $UserFetch -> fetchrow_array;
 
   return $EmailUserID;

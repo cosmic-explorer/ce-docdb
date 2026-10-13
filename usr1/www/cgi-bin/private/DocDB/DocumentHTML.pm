@@ -446,7 +446,8 @@ sub DocumentLink (%) {
     }
     $Link .= $EndElement;
   } elsif ($TitleLink) {      # Use the document Title
-    $Link .= $DocRevisions{$DocRevID}{Title};
+    require HTML::Entities;
+    $Link .= HTML::Entities::encode($DocRevisions{$DocRevID}{Title});
     $Link .= $EndElement;
     if ($UseSignoffs && !$NoApprovalStatus) { # Put document status on next line
       require "SignoffUtilities.pm";

@@ -516,15 +516,13 @@ sub ProcessManualAuthors {
     my($first, $middle) = split(/ /, $first, 2);
     $middle =~ s/\.//g;    # Remove dots if any  
  
-    my $author_list_query = "select AuthorId from Author where FirstName = \"$first\" and MiddleInitials=\"$middle\" and LastName = \"$last\""; 
-    my $author_list = $dbh -> prepare($author_list_query);
-    my $fuzzy_list_query = "select AuthorId from Author where FirstName like (\"$first%\") and MiddleInitials like (\"$middle%\") and LastName like (\"$last%\")"; 
-    my $fuzzy_list = $dbh -> prepare($fuzzy_list_query);
+    my $author_list = $dbh -> prepare("select AuthorId from Author where FirstName = ? and MiddleInitials = ? and LastName = ?");
+    my $fuzzy_list  = $dbh -> prepare("select AuthorId from Author where FirstName like ? and MiddleInitials like ? and LastName like ?");
 
 
 ### Find exact match (initial or full name)
 
-    $author_list -> execute() || die("\$!, ProcessManualAuthors");
+    $author_list -> execute($first,$middle,$last) || die("\$!, ProcessManualAuthors");
     $author_list -> bind_columns(undef, \($AuthorID));
     @Matches = ();
     while ($author_list -> fetch) {
@@ -552,7 +550,7 @@ sub ProcessManualAuthors {
     
     $first =~ s/\.//g;    # Remove dots if any  
 #    $first .= "%";        # Add SQL wildcard  # yes but already put in up there
-    $fuzzy_list -> execute() || die("\$!, ProcessManualAuthors");   
+    $fuzzy_list -> execute("$first%","$middle%","$last%") || die("\$!, ProcessManualAuthors");
     $fuzzy_list -> bind_columns(undef, \($AuthorID));
     @Matches = ();
     while ($fuzzy_list -> fetch) {
@@ -619,15 +617,13 @@ sub GetAuthorFromNames {
     my($first, $middle) = split(/ /, $first, 2);
     $middle =~ s/\.//g;    # Remove dots if any  
 
-    my $author_list_query = "select AuthorId from Author where FirstName = \"$first\" and MiddleInitials=\"$middle\" and LastName = \"$last\""; 
-    my $author_list = $dbh -> prepare($author_list_query);
-    my $fuzzy_list_query = "select AuthorId from Author where FirstName like (\"$first%\") and MiddleInitials like (\"$middle%\") and LastName like (\"$last%\")"; 
-    my $fuzzy_list = $dbh -> prepare($fuzzy_list_query);
+    my $author_list = $dbh -> prepare("select AuthorId from Author where FirstName = ? and MiddleInitials = ? and LastName = ?");
+    my $fuzzy_list  = $dbh -> prepare("select AuthorId from Author where FirstName like ? and MiddleInitials like ? and LastName like ?");
 
 
 ### Find exact match (initial or full name)
 
-    $author_list -> execute() || die("\$!, ProcessManualAuthors");
+    $author_list -> execute($first,$middle,$last) || die("\$!, ProcessManualAuthors");
     $author_list -> bind_columns(undef, \($AuthorID));
     @Matches = ();
     while ($author_list -> fetch) {
@@ -655,7 +651,7 @@ sub GetAuthorFromNames {
     
     $first =~ s/\.//g;    # Remove dots if any  
 #    $first .= "%";        # Add SQL wildcard  # yes but already put in up there
-    $fuzzy_list -> execute() || die("\$!, ProcessManualAuthors");   
+    $fuzzy_list -> execute("$first%","$middle%","$last%") || die("\$!, ProcessManualAuthors");
     $fuzzy_list -> bind_columns(undef, \($AuthorID));
     @Matches = ();
     while ($fuzzy_list -> fetch) {
