@@ -57,13 +57,26 @@ scripts/build-image.sh
 This builds `cosmicexplorer/dcc:ce-<commit>` on top of `cosmicexplorer/dcc:3.3.0`
 and prints the tag. It is a COPY-only build and takes well under a minute.
 
-Optional offline checks before touching production:
+Optional offline checks before touching production. The Apache check has to
+go through the real entrypoint, because `start-apache.sh` is what links the
+Let's Encrypt certificates into place and substitutes the secrets, so give it
+dummy secrets and the host's certificate directory read-only:
 
 ```bash
 TAG=cosmicexplorer/dcc:ce-<commit>
-# Apache config parses (secrets are placeholders here, so only syntax is checked)
-docker run --rm -e SHIB_HEADER_SECRET=x -e REST_AUTHORIZED_EPPN=x@example.org --entrypoint httpd $TAG -t
-# A Perl script compiles
+
+# Apache configuration parses
+FAKE=$(mktemp -d)
+for s in mysql_root_passwd mysql_docdbrw_passwd mysql_docdbro_passwd shib_header_secret; do echo dummy > $FAKE/$s; done
+echo x@example.org > $FAKE/rest_authorized_eppn
+docker run --rm \
+    -v /srv/docker/dcc/letsencrypt/config/etc/letsencrypt:/etc/letsencrypt:ro \
+    -v $FAKE:/run/secrets:ro \
+    --entrypoint /usr/local/sbin/start-apache.sh $TAG httpd -t
+rm -rf $FAKE
+# expect "Syntax OK"; the Alias-overlap and ServerName warnings are long-standing and harmless
+
+# A Perl CGI script compiles
 docker run --rm -w /usr1/www/cgi-bin/private/DocDB --entrypoint perl $TAG -c ListBy
 ```
 
