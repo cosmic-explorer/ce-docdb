@@ -1,0 +1,11 @@
+.git
+.gitignore
+.dockerignore
+README.md
+UPDATING.md
+scripts
+# host bind mounts, not part of the image
+usr1/www/html/DocDB
+usr1/www/html/public
+# SP certificate is installed from a Docker secret at start-up
+etc/shibboleth/sp-signing-cert.pem

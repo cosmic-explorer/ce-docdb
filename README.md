@@ -9,6 +9,9 @@ Dockerfile in
 and runs as the `dcc_dcc` service of a Docker Swarm stack on
 `ce-dcc.phy.syr.edu` (`dcc.cosmicexplorer.org`).
 
+**To change the running DCC, follow [UPDATING.md](UPDATING.md).** Never edit
+files inside the running container.
+
 The initial commit is a verbatim extraction from the running
 `cosmicexplorer/dcc:3.3.0` container on 2026-10-13, except for the scrubbing
 described below. Paths mirror the container filesystem so a file at
@@ -44,14 +47,23 @@ in the container.
   (`/usr1/www/cgi-bin/private/DocDB/...`) for fidelity, so they appear
   dangling in a checkout that is not rooted at `/`.
 
-## Live edit found in the running container
+## Live edits found in the running container
 
-`docker diff` showed one code/config change in the container layer that is
-**not in the image**: `etc/httpd/conf.d/dcc-dev.conf` was hand-edited to allow
-additional eduPersonPrincipalNames (Syracuse accounts) to reach the `/login`
-OAuth2 consent endpoint, wrapped in a `<RequireAny>`. This repository contains
-the live version. If the `dcc_dcc` service is recreated from the image, that
-edit is lost unless it is folded into the Dockerfile.
+`docker diff` showed three changes in the container layer that are **not in
+the `cosmicexplorer/dcc:3.3.0` image**. This repository contains the live
+versions, so an image built from it (see [UPDATING.md](UPDATING.md)) carries
+them; until that is deployed, recreating the `dcc_dcc` container would lose
+them.
+
+* `etc/httpd/conf.d/dcc-dev.conf`: additional eduPersonPrincipalNames allowed
+  to reach the `/login` OAuth2 consent endpoint, wrapped in `<RequireAny>`.
+  Also folded into the ce-it-infrastructure Dockerfile (branch
+  `dcc-login-eppns`).
+* `usr1/www/cgi-bin/private/DocDB/ListBy`: HTML-entity encodes all query
+  parameters (XSS hardening). The block is pasted twice; harmless but could be
+  deduplicated.
+* `etc/shibboleth/inc-md-cert-mdq.pem`: InCommon MDQ signing certificate
+  referenced by `shibboleth2.xml`, added only inside the container.
 
 ## Related
 
