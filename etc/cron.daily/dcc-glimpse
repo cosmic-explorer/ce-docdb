@@ -1,0 +1,4 @@
+#!/bin/sh
+
+ts=`/bin/date +%s`
+/usr/local/bin/glimpse-init.sh >/root/glimpse-init.REPORT."$ts" 2>&1 &

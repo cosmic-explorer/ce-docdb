@@ -1,0 +1,41 @@
+<html>
+    <head>
+        <title>Login Completed</title>
+        <script type="text/javascript">
+        function submitOnce() {
+          if (location.hash.length>0) {
+                document.forms[0].submit();
+          } else {
+             var loc = window.location;
+             window.location = loc + "#submitted";
+             document.forms[0].submit();
+          }
+        }
+        </script>
+    </head>
+    <body>
+
+        <noscript>
+        <p>Your wiki editing session was interrupted because your LIGO login session ended. 
+        If you would like to preserve your edits, submit this form now.</p>
+
+        <p>To not receive this message again and have your edits automatically
+        preserved in this situation please enable Javascript on your browser.
+        </noscript>
+        
+        <form method="POST" action="<shibmlp action/>">
+        <shibmlpfor PostedData>
+            <input type="hidden" name="<shibmlp $name/>" value="<shibmlp $value/>"/>
+        </shibmlpfor>
+        <noscript>
+        <div>
+        <input type="submit" name="_shib_continue_" value="Continue"/>
+        </div>
+        </noscript>
+        </form>
+
+    <script type="text/javascript">
+    submitOnce();
+    </script>
+    </body>
+</html>

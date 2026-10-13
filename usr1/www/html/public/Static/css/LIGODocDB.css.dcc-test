@@ -1,0 +1,126 @@
+body {
+  margin: 1em;
+  background-image: url('/backgrounds/dcc-test.png');
+  background-repeat: no-repeat;
+  font-family : arial, helvetica, sans-serif;
+  background-color: #edf;
+}
+
+input[type="text"]:focus, textarea:focus, select:focus {
+  border: 5px double #66c;
+}
+
+*.publicwm {
+  background-image: url('/backgrounds/public-site-bg.png');
+  background-color: #ffede2;
+}
+
+.DocDBNavBar {
+ padding-bottom: 1em;
+}
+
+.showdocSignoffs {
+   font-weight: bold;
+}
+
+/* Any padding or border will show up on the page
+   even when there is no status message */
+.serverstatus {
+   width: 80%;
+   margin: auto;
+   background-color: #fdf;
+}
+
+#LeftColumn3Col {
+  background: #ddf;
+  width: 15em;
+  padding: 0.5em;
+  padding-left: 1em;
+}
+
+#RightColumn3Col {
+  background: #ddf;
+  width: 15em;
+  padding: 0.5em;
+  padding-left: 1em;
+}
+
+#UpdateButtons input[name=".submit"] {
+   width: 15em;
+}
+
+#DocNotifySignup input[name=".submit"] {
+   width: 15em;
+}
+/* Move the main column over to match the left column */
+#MainColumn3Col {
+	padding-left: 20em;
+        background-color: #edf;
+}
+
+#OtherVersionTable tr {
+   background-color: #ddf;
+}
+
+/* Change alternating <li> environments */
+li.Odd {
+  background-color: #ddf;
+}
+
+li.Even {
+  background-color: white;
+}
+
+/* Change alternating <tr> environments */
+
+tr.alt {
+  background-color: #fff;
+}
+
+/* The sortable columns environment */
+th.Docid, th.Title, th.Events, th.Author, th.Topics, th.Updated, th.TalkTime, th.TalkLength, th.Files, th.Edit {
+  background-color: #dec;
+}
+
+*.slink {
+  background-color: #dec;
+  color: #33e;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+hr  {
+	color: #000000;
+}
+	
+.smalltext  {
+	font-size : 70%;
+}
+
+.stdtext  {
+        font-size: 100%;
+}
+
+.lgtext  {
+	font-size : 130%;
+}
+
+ul#searchinputs {
+   line-height: 2;
+   margin-top: -1em;
+   padding-top: 0em;
+   padding-left: 1em;
+}
+
+.hover-comment {
+   font-size : 70%;
+   background-color: #eee;
+}
+
+.hover-comment:hover {
+   background-color: #fff;
+}
+
+td.Docid {
+  min-width: 8em;
+}

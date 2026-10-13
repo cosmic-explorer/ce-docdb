@@ -1,0 +1,70 @@
+<SPConfig xmlns="urn:mace:shibboleth:2.0:native:sp:config"
+    xmlns:conf="urn:mace:shibboleth:2.0:native:sp:config"
+    xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+    xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"    
+    xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+    clockSkew="180">
+
+    <ApplicationDefaults entityID="YOUR_ENTITY_ID"
+                         REMOTE_USER="krbPrincipalName eduPersonPrincipalName">
+
+        <Sessions lifetime="600" timeout="600" checkAddress="false" relayState="ss:mem" 
+            relayStateLimit="exact" postData="ss:mem" postTemplate="/etc/shibboleth/wikiPost.html" 
+            cookieProps="; path=/; secure">
+
+            <SessionInitiator type="Chaining" Location="/Login" isDefault="true" id="Intranet" >
+                <SessionInitiator type="SAML2" acsIndex="3" ECP="true" template="bindingTemplate.html" />
+                <SessionInitiator type="SAMLDS" URL="https://YOUR_DS_HOST/LIGO_SAML_DiscoveryService" />
+                <SessionInitiator type="SAML2" ECP="true" template="bindingTemplate.html" />
+            </SessionInitiator>
+
+            <LogoutInitiator type="Chaining" Location="/Logout">
+                <LogoutInitiator type="Local" />
+            </LogoutInitiator>
+
+            <md:AssertionConsumerService Location="/SAML2/POST" index="1" Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"/>
+            <md:AssertionConsumerService Location="/SAML2/POST-SimpleSign" index="2" Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST-SimpleSign"/>
+            <md:AssertionConsumerService Location="/SAML2/Artifact" index="3" Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact"/>
+            <md:AssertionConsumerService Location="/SAML2/ECP" index="4" Binding="urn:oasis:names:tc:SAML:2.0:bindings:PAOS"/>
+
+            <md:ArtifactResolutionService Location="/Artifact/SOAP" index="1" Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"/>
+            
+            <Handler type="MetadataGenerator" Location="/Metadata" signing="false"/>
+
+            <Handler type="Status" Location="/Status" acl="127.0.0.1"/>
+
+            <Handler type="Session" Location="/Session" showAttributeValues="false"/>
+
+            <Handler type="DiscoveryFeed" Location="/DiscoFeed"/>
+        </Sessions>
+
+        <Errors supportContact="rt-auth@ligo.org"
+            logoLocation="/shibboleth-sp/logo.jpg"
+            styleSheet="/shibboleth-sp/main.css"/>
+
+        <MetadataProvider type="XML" url="https://login.ligo.org/SAML2/metadata/ligo-metadata.xml"
+            backingFilePath="/var/log/shibboleth/ligo-metadata.xml" reloadInterval="82800" >
+            <MetadataFilter type="Signature" certificate="/etc/shibboleth/login.ligo.org.cert.LIGOCA.pem"/>
+        </MetadataProvider>
+        
+        <AttributeExtractor type="XML" validate="true" path="attribute-map.xml"/>
+        
+        <AttributeResolver type="Query" subjectMatch="true"/>
+
+        <AttributeFilter type="XML" validate="true" path="attribute-policy.xml"/>
+
+        <CredentialResolver type="File" key="sp-key.pem" certificate="sp-cert.pem"/>
+
+        <ApplicationOverride id="aLIGOwiki">
+            <Sessions lifetime="86400" timeout="86400" handlerURL="/WIKI_PATH/Shibboleth.sso" checkAddress="false" 
+            relayState="ss:mem" relayStateLimit="exact" postData="ss:mem" postTemplate="/etc/shibboleth/wikiPost.html" 
+            cookieProps="; path=/; secure" />
+        </ApplicationOverride>
+
+    </ApplicationDefaults>
+    
+    <SecurityPolicyProvider type="XML" validate="true" path="security-policy.xml"/>
+
+    <ProtocolProvider type="XML" validate="true" reloadChanges="false" path="protocols.xml"/>
+
+</SPConfig>

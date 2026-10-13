@@ -1,0 +1,13 @@
+# never commit key material or live certificates
+*.key
+*-key.pem
+*privkey*
+etc/httpd/x509-certs/
+etc/shibboleth/sp-signing-key.pem
+etc/shibboleth/sp-encrypt-key.pem
+# vendor reference copies
+etc/shibboleth/*.dist
+# editor / OS noise
+*~
+*.swp
+.DS_Store
