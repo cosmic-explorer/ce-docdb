@@ -19,9 +19,9 @@ Severity summary:
 | Severity | Count | Deploy priority |
 |----------|-------|-----------------|
 | Critical | 3 | fix and deploy at the first opportunity |
-| High | 10 | same release |
-| Medium | 9 | next release |
-| Low / informational | about 30 | as convenient |
+| High | 13 | same release |
+| Medium | 11 | next release |
+| Low / informational | about 35 | as convenient |
 
 The three Critical findings (C1 to C3) share one root cause: server-side
 checks that exist in the UI or in comments but not in the code path that
@@ -244,6 +244,44 @@ sent unencrypted to a third-party host.
 Fix: remove `ProcessPNPReview`, `DisplayReviewButton` and the
 `@ReviewableDocTypes` configuration.
 
+### H11. Document alias accepted unvalidated in "use" mode [CONFIRMED]
+
+`ProcessDocumentAdd:497-525` (`mode=use`, the "use an existing DCC number"
+path offered by `ReserveHome`). The `oldnumber` value is upper-cased, checked
+against duplicates, required to start with a letter matching the document
+type, and otherwise stored as the alias. With `$UseAliasAsFileName` the alias
+becomes a directory component (`MakeDirectory`, `GetDirectory`), is placed in
+the indexer command string (H1) and in `rm -rf` (L6), and is printed unescaped
+in links. Path traversal, command injection and stored XSS follow from a
+crafted alias. `DocumentSQL.pm:146` additionally uses the alias as a `sprintf`
+format string.
+
+Fix: accept only `^[A-Z]\d{6,8}$` (the form every other script already
+requires for aliases) and store the alias verbatim.
+
+### H12. `qastat` interpolated into SQL, and clients can set certification state [CONFIRMED]
+
+`ProcessDocumentAdd:183,600,710-717`. `$QAState = $params{qastat}` is
+interpolated into `update DocumentRevision set QAcheck=$QAState` on the
+read-write connection (reachable with `mode=updatedb` and `reset=0` by any
+user with modify rights on one document), and the same client value is passed
+to `UpdateRevisionPublicSecurity`, so a modifier can mark their own
+`Public_Pending` revision certified and publish it without `CanCertify`.
+
+Fix: coerce the value to 0/1 and bind it; for non-certifiers carry the stored
+QA state of the revision forward instead of the form value.
+
+### H13. Stored cross-site scripting through the document title [CONFIRMED]
+
+Titles are stored as entered (`ProcessDocumentAdd:155`) and rendered raw in
+`ResponseElements.pm:36` (`PrintTitle`), `DocumentHTML.pm:449` (title links
+in every document table) and the `<title>` element written by
+`HTMLUtilities.pm::DocDBHeader`. Abstracts, notes and publication info go
+through `SafeHTML`; titles do not. Public documents render in the public
+instance too.
+
+Fix: HTML-encode titles at those output sites.
+
 ## Medium
 
 ### M1. Vendored HTML::Defang 1.04 has a known sanitiser bypass [CONFIRMED]
@@ -351,6 +389,24 @@ Fix: reject non-POST for state changes and add a per-session synchroniser
 token (for example derived from the Shibboleth session ID) checked in a
 shared helper.
 
+### M10. Stored cross-site scripting through file descriptions [CONFIRMED]
+
+`FileHTML.pm:220-228` (`FileLink`) prints the per-file description from the
+`filedesc<N>` upload fields, and the file name in a `title` attribute, without
+encoding. Rendered wherever a file list appears, including the public instance.
+
+Fix: HTML-encode description and names in `FileLink`.
+
+### M11. XMLUpload can import files from the server's `/tmp` [CONFIRMED]
+
+`XMLUpload:281-293` treats a `<file href>` that exists locally and whose
+directory is in `@LocalUploadDirectories` as a file to copy into the new
+document. `SiteConfig.pm:42` lists `/tmp` (shared with every process in the
+container, including DocDB's own debug files from M4). Any `CanCreate` user can
+therefore attach arbitrary world-readable files from `/tmp` to a document.
+
+Fix: empty `@LocalUploadDirectories` (or point it at a dedicated directory).
+
 ## Low
 
 * **L1** `Utilities.pm::URLify` builds auto-links to `https://<hostname>.ligo.org`
@@ -435,6 +491,17 @@ shared helper.
   `CalendarHTML.pm:686` (stale `$EventID`), `ListEventsBy:407` (wrong array
   name), `DocumentReviewSQL.pm` (keys results by a global), `AuthorSQL.pm`
   manual-author error message builds an unused `$xxx`.
+* **L21** Document-flow defects: `ModifyHome:118-127` "Reserve" button posts
+  `mode=update`; `ProcessDocumentAdd:485` tests `$DocumentID` (never set; the
+  variable is `$documentID`) so the branch is dead; `FileUtilities.pm:145`
+  uses an undefined `$main_file` in a warning that `$UseDeadlyWarning` turns
+  fatal; `RetrieveArchive:68` prints the literal text `&remote_user`;
+  `XRefHTML.pm:117` fetches with a not-yet-set `$RefDocID`; `XMLClone:93-98`
+  patches XML with hard-coded offsets and corrupts it when the text lacks
+  `amp;`; `RevisionSQL.pm::FetchRevisionAuthorEmailUserIDs` returns an
+  unrelated global (dead); `RevisionHTML.pm:423-451` (`DontPrintRevisionInfo`)
+  places `docid`/`version` into an `onClick` attribute unescaped (reflected
+  XSS on the AddFiles error path).
 * **L20** LIGO leftovers in text: `SignoffHTML.pm:981,1133` mailto subjects
   say `LIGO-`; `$GroupSuffix = "@ligo.org"`; `CertificateInstructions.pm` is
   Fermilab text; `AuthName` strings; `pnp-dev.ligo.org`.
@@ -463,8 +530,8 @@ shared helper.
 ## Remediation plan
 
 **Release 1 (hot-fix, same day it can be scheduled):** C1, C2, C3, H1, H2,
-H3, H4, H6, H7, M4 plus the `AcceptPathInfo Off` / `Require shib-session`
-part of H5. All are small, local code changes with no schema impact. Build
+H3, H4, H6, H7, H11, H12, H13, M4, M10, M11, L11, L17 plus the
+`AcceptPathInfo Off` / `Require shib-session` part of H5. All are small, local code changes with no schema impact. Build
 and deploy per [UPDATING.md](../UPDATING.md); expect a few minutes of
 downtime for the container restart.
 
@@ -489,6 +556,28 @@ that area (`Search.pm`, `SearchAtoms.pm`, `ListBy`, `Sorts.pm`,
 `AuthorSQL.pm`, `Scripts.pm`, preference and cookie scripts) was re-reviewed
 directly with less depth on the HTML-rendering modules (`FormElements.pm`,
 `*HTML.pm` for topics, keywords, authors). The documents-and-files reviewer's
-report arrived truncated after H1; its narrative is summarised in
-[documents-and-files.md](documents-and-files.md) from direct reading, and any
-further findings from that area will be appended here.
+full report was received after an initial truncation; its findings are H1,
+H2, H11, H12, H13, M10, M11, L6, L8, L21 and I1/I2 above.
+
+## Status of fixes
+
+Branch `hotfix-release-1` in this repository implements Release 1: C1, C2,
+C3, H1, H2, H3, H4, H6 (file deleted), H7, H11, H12, H13, M4, M10, M11, L11,
+L17 (file deleted), and `AcceptPathInfo Off` plus an explicit
+`Require shib-session` on the private CGI location (H5, partial). Every
+modified Perl file passes `perl -c` under the production image's Perl and the
+Apache configuration passes `httpd -t`. The branch has **not** been deployed;
+see [UPDATING.md](../UPDATING.md) for the procedure, and test the Apache
+change on a staging container first if possible. Behavioural notes for the
+deployer:
+
+* Content search (`Search.pm`) now rejects unknown `filecontsearchmode` values
+  by falling back to `anysub`.
+* The QA-check toggle on `ShowDocument` requires administrator or certifier
+  rights and derives the current state from the database.
+* Non-certifiers editing a revision with `updatedb` keep its stored QA state.
+* Uploaded files with names that fail the sanity check are no longer written.
+* `XMLUpload` can no longer import files from server directories.
+* Titles, file descriptions and file names are HTML-encoded on output. A
+  title that intentionally contained HTML will now show the markup literally.
+* `MigrationHelper` and `cgi-bin/test.pl` are removed from the image.
