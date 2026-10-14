@@ -687,6 +687,13 @@ reviewed because they write the user and group tables; details in
 * **A4 [Low]** Node 12, Express 4.16, Sequelize 5, node-fetch 2 and Hydra
   v1.0.8 are all end-of-life; Dependabot flags the Node dependencies.
 
+## Upstream status
+
+LIGO's current DocDB 3.5.3 (opendcc/docdb) was compared against these
+findings; most Critical and High items are still present there, while H8, H13
+and much of L14 are fixed. See [upstream-opendcc.md](upstream-opendcc.md) for
+the table and for what is worth back-porting.
+
 ## Remediation plan
 
 **Release 1 (hot-fix, same day it can be scheduled):** C1, C2, C3, H1, H2,

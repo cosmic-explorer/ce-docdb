@@ -15,5 +15,6 @@ Start with [architecture.md](architecture.md) for the big picture.
 | [administration.md](administration.md) | Administration pages, user access applications, public instance differences, client-side JavaScript |
 | [rest-api.md](rest-api.md) | The REST API and OAuth2 path COmanage uses to provision users and groups: components, token flow, endpoints, operating notes |
 | [security-review.md](security-review.md) | Findings of the October 2026 code review with severity, evidence and fixes |
+| [upstream-opendcc.md](upstream-opendcc.md) | Comparison with LIGO's current DocDB 3.5.3 (opendcc/docdb): what it fixed, what it did not, what is worth back-porting |
 | [operations.md](operations.md) | Runbook: health, logs, database access and backup, users, GLIMPSE, TLS, Shibboleth, secrets |
 | [../UPDATING.md](../UPDATING.md) | How to build and deploy a code change so it survives reboots |
