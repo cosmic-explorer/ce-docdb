@@ -27,12 +27,21 @@ set +e
 scripts/check-drift.sh
 rc=$?
 set -e
-if [ ${rc} -eq 1 ] && [ "${FORCE:-0}" != "1" ]; then
-    echo >&2
-    echo "error: the running container has edits that are not in its image (listed above)." >&2
-    echo "Fold them into this repository and rebuild, or rerun with FORCE=1 to discard them." >&2
-    exit 1
-fi
+case "${rc}" in
+    0) ;;
+    1)
+        if [ "${FORCE:-0}" != "1" ]; then
+            echo >&2
+            echo "error: the running container has edits that are not in its image (listed above)." >&2
+            echo "Fold them into this repository and rebuild, or rerun with FORCE=1 to discard them." >&2
+            exit 1
+        fi
+        echo "warning: FORCE=1 set; the edits listed above will be lost" >&2 ;;
+    *)
+        # A missing container or a failed inspection must never read as "no drift".
+        echo "error: drift inspection failed (exit ${rc}); not deploying, even with FORCE=1" >&2
+        exit 1 ;;
+esac
 
 PREVIOUS=$(docker service inspect "${SERVICE}" --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}')
 echo "current image:  ${PREVIOUS}"
