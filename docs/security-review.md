@@ -19,13 +19,13 @@ Severity summary:
 | Severity | Count | Deploy priority |
 |----------|-------|-----------------|
 | Critical | 3 | fix and deploy at the first opportunity |
-| High | 13 | same release |
-| Medium | 11 | next release |
-| Low / informational | about 35 | as convenient |
+| High | 17 | same release |
+| Medium | 15 | next release |
+| Low / informational | about 45 | as convenient |
 
 The three Critical findings (C1 to C3) share one root cause: server-side
 checks that exist in the UI or in comments but not in the code path that
-performs the action. C1 is reachable without logging in.
+performs the action. C1 needs only a federated login, not DCC membership.
 
 ---
 
@@ -39,13 +39,16 @@ sanitisation block at lines 117-127 covers the other search fields but not
 this one) and is concatenated into a command string that is run through the
 shell with `open SEARCH, " $SearchString |"`. The companion value
 `$FileContSearch` is character-filtered, so the mode parameter is the
-unfiltered one. `$ContentSearch` is set in both the private and the public
-`ProjectGlobals.pm`, and `Search` and `Search.pm` are symlinked into the
-public instance, so the path is reachable by an unauthenticated visitor at
-`/cgi-bin/DocDB/Search`. Commands run as the `apache` user inside the `dcc`
-container, which can read all document files, both `SiteConfig.pm` files
-(hence the read-only and read-write database passwords after substitution)
-and the files under `/run/secrets`.
+unfiltered one. Reachability, corrected after the second pass: the public
+instance's `Search` script redirects every query to Google when `$Public` is
+set (`Search:54-75`) and never calls `LocalSearch`, so this is **not**
+reachable anonymously. It is reachable by anyone who can obtain a Shibboleth
+session at all, before any DocDB group membership is checked, which with
+InCommon, eduGAIN and ORCID federation is a very large population. Commands
+run as the `apache` user inside the `dcc` container, which can read all
+document files, both `SiteConfig.pm` files (hence the read-only and
+read-write database passwords after substitution) and the files under
+`/run/secrets`.
 
 Fix: accept only the four values the wrapper understands
 (`allword`, `anyword`, `allsub`, `anysub`) and reject anything else before
@@ -282,6 +285,50 @@ instance too.
 
 Fix: HTML-encode titles at those output sites.
 
+### H14. Search date-range parameters interpolated into SQL [CONFIRMED]
+
+`Search.pm:233-251,318-321,352`. `afterday`, `afteryear`, `beforeday`,
+`beforeyear` are concatenated into date strings and placed inside quoted SQL
+literals (`RevisionDate < "$SQLEnd"`) executed without binding; only the
+month passes through a hash lookup. Read-only connection, results still
+access-filtered, but the query shape is caller-controlled.
+
+Fix: accept only digits for day and year and known month abbreviations;
+bind the dates.
+
+### H15. `outerlogic` spliced into SQL; the validation does not abort in XML mode [CONFIRMED]
+
+`Search.pm:62-63,272-282,288,348,443`. The AND/OR check pushes an error, but
+`EndPage()` runs only when `outformat` is HTML; with XML output the script
+continues and `join $OuterLogic, @Phrases` places the raw value between SQL
+atoms.
+
+Fix: normalise both logic operators to `AND`/`OR` before use.
+
+### H16. Author names written into a JavaScript array unescaped [CONFIRMED]
+
+`AuthorHTML.pm:510-528` (`AuthorJSList`) emits `"$Authors{$ID}{Formal}"`
+inside a `<script>` block with no escaping of quotes, backslashes, newlines
+or `<`. Called from the home page of both instances (`DocumentDatabase:193`),
+`SearchForm`, `SelectPrefs` and `DocumentAddForm`. Any user with `CanCreate`
+can add an author with an arbitrary name through `AuthorAdd`, so this is a
+stored script injection on the home page.
+
+Fix: escape each element for a JavaScript string literal (or emit JSON);
+restrict author name characters in `AuthorAdd`.
+
+### H17. Document keywords placed in links without encoding [CONFIRMED]
+
+`KeywordHTML.pm:250-259` (`KeywordLink`) builds the href and link text from
+each keyword with no URL or HTML encoding; `RevisionHTML.pm::PrintKeywords`
+passes `DocumentRevision.Keywords`, stored verbatim from the document form.
+Every reader of `ShowDocument` is affected. `KeywordLinkByID` (lines
+234-240) and the chooser's `onclick` (line 59) have the same gap with
+admin-defined keywords.
+
+Fix: `CGI::escape` for the query string, `HTML::Entities::encode` for the
+text, JavaScript-escape the `onclick` value.
+
 ## Medium
 
 ### M1. Vendored HTML::Defang 1.04 has a known sanitiser bypass [CONFIRMED]
@@ -407,6 +454,44 @@ therefore attach arbitrary world-readable files from `/tmp` to a document.
 
 Fix: empty `@LocalUploadDirectories` (or point it at a dedicated directory).
 
+### M12. `ListBy` hidden inputs use unquoted attribute values [CONFIRMED]
+
+`ListBy:388-394` prints `value=$TopicID` (and `eventgroupid`, `authorid`)
+without quotes. The entity-encoding hot-fix leaves spaces and `=` intact, so
+a value containing whitespace adds attributes to the element.
+
+Fix: quote the attributes and validate the IDs as integers.
+
+### M13. Event titles written into JavaScript with incomplete escaping [CONFIRMED]
+
+`Scripts.pm:70-72` escapes only the first single quote in `Conference.Full`
+and nothing else before `event['$EventID'] = '$label'`. Anyone who may create
+events controls the title; the script is included on `SearchForm`.
+
+Fix: full JavaScript string escaping.
+
+### M14. Custom list field names are never validated and are printed raw [CONFIRMED]
+
+`CustomListForm:296-387`, `DocumentUtilities.pm:297-311`
+(`CookieToFieldList`), `DocumentHTML.pm:97-104,213-216`. Field names from
+`field1..15`, row/column spans and the stored cookie or `ConfigSetting` values
+are not checked against `%FieldTitles` and are emitted into `class` and
+`title` attributes and action messages unencoded. `CustomListForm` has no
+request-forgery protection, so a cross-site POST can plant the cookie.
+
+Fix: accept only known field keys and small integers; encode what is echoed.
+
+### M15. Database-sourced names printed without HTML encoding in link helpers [CONFIRMED]
+
+`AuthorHTML.pm:291-296,322-324,340,349` and the mailto links at 161-162,
+201, 248, 265; `DocTypeHTML.pm:137-139`; `TopicHTML.pm:297`;
+`SecurityHTML.pm:238-241`; `ListBy` messages at 193-306; `ListAuthorGroups:110`,
+`ListGroups:353`, `ListGroupUsers:79-119`, `ListEmailUsers:212-238`,
+`ProjectRoutines.pm:94,101`, `AuthorAdd:171`. Author names are the weakest
+trust boundary (any `CanCreate` user); the rest require admin roles.
+
+Fix: encode at output, as `TopicLink` already does.
+
 ## Low
 
 * **L1** `Utilities.pm::URLify` builds auto-links to `https://<hostname>.ligo.org`
@@ -502,6 +587,47 @@ Fix: empty `@LocalUploadDirectories` (or point it at a dedicated directory).
   unrelated global (dead); `RevisionHTML.pm:423-451` (`DontPrintRevisionInfo`)
   places `docid`/`version` into an `onClick` attribute unescaped (reflected
   XSS on the AddFiles error path).
+* **L22** `DocumentHTML.pm:62` computes the "First N of M documents" total
+  from the unfiltered ID list (and off by one); `ListBy:447-449` and
+  `Search.pm:634-636` print it, revealing how many matching documents exist
+  that the caller cannot see. `ListManagedDocuments:320-325` calls
+  `DocumentTable` in scalar context and gets the wrong count.
+* **L23** `XSearch:177-188` prints URL, title and author from remote DocDB
+  XML without encoding; `XSearch.pm:47` appends the search text to the remote
+  URL without URL-encoding. Not present in the public instance.
+* **L24** `SearchAtoms.pm:60`: in word modes each word becomes part of a
+  MySQL `REGEXP`; metacharacters are not escaped, so callers control the
+  pattern (expensive or invalid expressions fail silently). POSSIBLE impact
+  only.
+* **L25** Public `Search:54-66` redirects to Google with `site:dcc.ligo.org`
+  and the raw query text: every public search on the Cosmic Explorer site
+  searches LIGO's DCC. Use the configured host and URL-encode the text.
+* **L26** More LIGO leftovers: `AuthorHTML.pm` mail subjects say `LIGO-`;
+  `ListGroups:342` and `DocDBHelp.xml` link to `dcc.ligo.org`;
+  `ProjectRoutines.pm:105` hard-codes group ID 14 as the admin group;
+  `ListBy:84` forces the Los Angeles time zone; `GeneralInstructions.pm:162`
+  links to Fermilab.
+* **L27** Runtime defects in this area: `SearchAtoms.pm:327-332` uses the key
+  `Numbers` (hash key is `Number`) so number matches get no relevance weight;
+  `SetGroups:495` reads `groups` while `SelectGroups` posts `security`, so the
+  limiting cookie is always `-1` (unreachable under kerberos validation);
+  `InstitutionAddForm` is a mislabelled copy of `AuthorAddForm`;
+  `DocTypeHTML.pm:54-55` uses labels as option values so per-type custom
+  lists never apply; `TopicSQL.pm:296-298` reads a non-existent hash key;
+  `KeywordSQL.pm:150` prepares a delete it never executes; `ListBy:312`
+  `latest=1` subquery is a no-op and the type listing lacks `Obsolete=0`;
+  `local $SIG{__WARN__}` inside an `if` block in `Search`, `SearchForm`,
+  `SelectPrefs` is undone immediately so `$UseDeadlyWarning` has no effect
+  there; `TopicHTML.pm:131-139` declares `%Lists` but uses `%List`;
+  `FormElements.pm:634-695` dead code clobbers `%params`;
+  `ProjectRoutines.pm:161-163` labels the logout link "Login" and shows it
+  only to administrators.
+* **L28** `Statistics` is in the public instance and reports counts over all
+  documents including restricted ones (and divides by zero on an empty
+  database); `ListGroupUsers` and `ListEmailUsers` show every account's name
+  and e-mail to any logged-in user. Confirm these are intended.
+* **L29** `SetPrefs` stores `numfile` and `overdate` from the request in
+  cookies without bounds; `Cookies.pm` reads them back unchecked.
 * **L20** LIGO leftovers in text: `SignoffHTML.pm:981,1133` mailto subjects
   say `LIGO-`; `$GroupSuffix = "@ligo.org"`; `CertificateInstructions.pm` is
   Fermilab text; `AuthName` strings; `pnp-dev.ligo.org`.
@@ -530,12 +656,12 @@ Fix: empty `@LocalUploadDirectories` (or point it at a dedicated directory).
 ## Remediation plan
 
 **Release 1 (hot-fix, same day it can be scheduled):** C1, C2, C3, H1, H2,
-H3, H4, H6, H7, H11, H12, H13, M4, M10, M11, L11, L17 plus the
-`AcceptPathInfo Off` / `Require shib-session` part of H5. All are small, local code changes with no schema impact. Build
+H3, H4, H6, H7, H11, H12, H13, H14, H15, H16, H17, M4, M10, M11, M12, M13,
+L11, L17 plus the `AcceptPathInfo Off` / `Require shib-session` part of H5. All are small, local code changes with no schema impact. Build
 and deploy per [UPDATING.md](../UPDATING.md); expect a few minutes of
 downtime for the container restart.
 
-**Release 2:** H8, H9, M1 (Defang upgrade), M6, M7, M8, H10 (remove P&P),
+**Release 2:** H8, H9, M1 (Defang upgrade), M6, M7, M8, M14, M15, H10 (remove P&P), L25,
 L9 (remove certificate scripts), L17, L18, and the `LocationMatch`
 tightening in H5 after a test deploy.
 
@@ -551,20 +677,24 @@ ce-it-infrastructure Node dependencies.
 ## Coverage notes
 
 Four areas were reviewed in parallel; the search-and-listing reviewer was
-terminated mid-task by the model provider's safeguards after reporting C1, so
-that area (`Search.pm`, `SearchAtoms.pm`, `ListBy`, `Sorts.pm`,
-`AuthorSQL.pm`, `Scripts.pm`, preference and cookie scripts) was re-reviewed
-directly with less depth on the HTML-rendering modules (`FormElements.pm`,
-`*HTML.pm` for topics, keywords, authors). The documents-and-files reviewer's
+terminated mid-task by the model provider's safeguards after reporting C1.
+That area was first re-reviewed directly and then given a complete second
+pass by a fresh reviewer that read every file in the area in full
+(`FormElements.pm`, `SearchFormElements.pm`, the topic/keyword/author/doctype
+HTML modules, `Sorts.pm`, `Scripts.pm`, `Search.pm`, `SearchAtoms.pm`,
+`ListBy`, all `List*` scripts, `CustomListForm`, `XSearch`, preference and
+cookie scripts, `AuthorAdd`), producing H14 to H17, M12 to M15 and L22 to L29
+and the correction to C1's reachability. The documents-and-files reviewer's
 full report was received after an initial truncation; its findings are H1,
 H2, H11, H12, H13, M10, M11, L6, L8, L21 and I1/I2 above.
 
 ## Status of fixes
 
 Branch `hotfix-release-1` in this repository implements Release 1: C1, C2,
-C3, H1, H2, H3, H4, H6 (file deleted), H7, H11, H12, H13, M4, M10, M11, L11,
-L17 (file deleted), and `AcceptPathInfo Off` plus an explicit
-`Require shib-session` on the private CGI location (H5, partial). Every
+C3, H1, H2, H3, H4, H6 (file deleted), H7, H11, H12, H13, H14, H15, H16, H17,
+M4, M10, M11, M12, M13, L11, L17 (file deleted), and `AcceptPathInfo Off`
+plus an explicit `Require shib-session` on the private CGI location (H5,
+partial). Every
 modified Perl file passes `perl -c` under the production image's Perl and the
 Apache configuration passes `httpd -t`. The branch has **not** been deployed;
 see [UPDATING.md](../UPDATING.md) for the procedure, and test the Apache
@@ -581,3 +711,7 @@ deployer:
 * Titles, file descriptions and file names are HTML-encoded on output. A
   title that intentionally contained HTML will now show the markup literally.
 * `MigrationHelper` and `cgi-bin/test.pl` are removed from the image.
+* Search date fields that are not digits are ignored; `innerlogic`/`outerlogic`
+  values other than OR are treated as AND.
+* Author names and event titles are escaped in the JavaScript lists; keywords
+  are encoded in links.
