@@ -26,8 +26,8 @@ SessionTalk.
 ### Creating and editing
 
 * `MeetingModify` creates or edits the event shell and its list of sessions
-  and breaks. It posts to itself; `mode=copy` with `offsetdays` clones an
-  event to a later date.
+  and breaks. It posts to itself; `mode=copy` with `offsetdays` copies the
+  event shell and its session list to a later date, without the talks.
 * `SessionModify` edits one session and its talks. In `singlesession` mode it
   creates an event and its only session in one form; the "+" links on the
   calendar use this.
