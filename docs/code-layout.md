@@ -106,9 +106,14 @@ Conventions worth knowing:
   ref of options (`-name`, `-default`, `-multiple`, `-helplink`, ...), as
   described in the in-tree `README`.
 * **Output escaping.** `SafeHTML()` (HTML::Defang) is the sanitizer for
-  rich-text fields (abstracts, notes); `HTML::Entities::encode` is used in
-  a few places for plain values. Many outputs are not escaped at all; see
-  the [security review](security-review.md).
+  rich-text fields (abstracts, notes). For plain values use
+  `InputValidation::escape_html` (text) and `InputValidation::escape_attr`
+  (attributes); `InputValidation.pm` (back-ported from open-DCC 3.5.3) also
+  provides `validate_id`, `validate_allowlist`, `validate_date_string` and
+  `get_single_param` for request parameters. Messages pushed on the error,
+  warning and action stacks are escaped when printed, so they must be plain
+  text. Many older outputs are not escaped at all; see the
+  [security review](security-review.md).
 * **SQL.** Most queries use `prepare` with `?` placeholders. A minority
   interpolate values; the review lists them.
 * **Dates.** Dates travel as `YYYY-MM-DD` strings checked by

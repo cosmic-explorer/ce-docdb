@@ -293,9 +293,9 @@ sub DeleteTopic ($) {
   }
 
   if ($Force) {
-    push @ActionStack,"Topic <strong>$Topics{$TopicID}{LongDescription}</strong>, all sub-topics, all associations, and all associations to sub-topics deleted.";
+    push @ActionStack,"Topic \"$Topics{$TopicID}{Long}\", all sub-topics, all associations, and all associations to sub-topics deleted.";
   } else {
-    push @ActionStack,"Topic <strong>$Topics{$TopicID}{LongDescription}</strong> deleted.";
+    push @ActionStack,"Topic \"$Topics{$TopicID}{Long}\" deleted.";
   }
   return 1;
 }

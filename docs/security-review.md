@@ -731,6 +731,16 @@ H2, H11, H12, H13, M10, M11, L6, L8, L21 and I1/I2 above.
 
 ## Status of fixes
 
+Branch `backport-opendcc` (on top of `hotfix-release-1`) adds, from open-DCC
+3.5.3: `InputValidation.pm`; escaping of every message stack and the debug
+page in `ResponseElements.pm` (closes **H8**'s message-stack vector; the
+direct echoes listed under H8 in individual scripts remain for Release 2);
+the thirteen messages that contained markup rewritten as plain text; the two
+`prefilter.tcl` robustness fixes (no more report files in `/root`, survives
+`ps2ascii` failures). It also fixes the `TopicSQL.pm` hash-key defect noted in
+L19. Image for that branch head is listed in the pull request.
+
+
 Branch `hotfix-release-1` in this repository implements Release 1: C1, C2,
 C3, H1, H2, H3, H4, H6 (file deleted), H7, H11, H12, H13, H14, H15, H16, H17,
 M4, M10, M11, M12, M13, L11, L17 (file deleted), and `AcceptPathInfo Off`
