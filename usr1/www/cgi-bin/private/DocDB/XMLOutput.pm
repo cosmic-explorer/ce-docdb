@@ -541,6 +541,7 @@ sub XRefByXMLOut {
   }
 
   my @XRefByXML = ();
+  my %SeenDocument = ();
 
   foreach my $DocXRefID (@DocXRefIDs) {
     my $DocRevID = $DocXRefs{$DocXRefID}{DocRevID};
