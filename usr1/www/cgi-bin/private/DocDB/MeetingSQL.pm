@@ -190,6 +190,7 @@ sub MatchEvent ($) {
   my @MatchIDs = ();
   if ($Short) {
     $Short =~ tr/[A-Z]/[a-z]/;
+    $Short =~ s/([\\%_])/\\$1/g;
     $Short = "%".$Short."%";
     my $List = $dbh -> prepare(
        "select ConferenceID from Conference where LOWER(Title) like ?"); 

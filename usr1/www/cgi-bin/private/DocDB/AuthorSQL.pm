@@ -719,9 +719,10 @@ sub MatchAuthor ($) {
   my @MatchIDs = ();
   if ($Either) {
     $Either =~ tr/[A-Z]/[a-z]/;
+    $Either =~ s/([\\%_])/\\$1/g;
     my $List = $dbh -> prepare(
-       "select AuthorID from Author where LOWER(FirstName) like \"%$Either%\" or LOWER(LastName) like \"%$Either%\""); 
-    $List -> execute();
+       "select AuthorID from Author where LOWER(FirstName) like ? or LOWER(LastName) like ?");
+    $List -> execute("%$Either%","%$Either%");
     $List -> bind_columns(undef, \($AuthorID));
     while ($List -> fetch) {
       push @MatchIDs,$AuthorID;
@@ -743,9 +744,10 @@ sub MatchAuthor_NoGroups ($) {
   my @MatchIDs = ();
   if ($Either) {
     $Either =~ tr/[A-Z]/[a-z]/;
+    $Either =~ s/([\\%_])/\\$1/g;
     my $List = $dbh -> prepare(
-       "select AuthorID from Author where LOWER(FirstName) like \"%$Either%\" or LOWER(LastName) like \"%$Either%\""); 
-    $List -> execute();
+       "select AuthorID from Author where LOWER(FirstName) like ? or LOWER(LastName) like ?");
+    $List -> execute("%$Either%","%$Either%");
     $List -> bind_columns(undef, \($AuthorID));
     while ($List -> fetch) {
       push @MatchIDs,$AuthorID;
