@@ -180,7 +180,7 @@ identity (username, e-mail, permissions). They are linked one-to-one by
 `Submitter` and `Requester`, and `FSUtilities.pm::ProtectDirectory` calls
 `FetchEmailUserIDFromAuthorID($Requester)`. (`CanModify` compares
 `SubmitterID == $EmailUserID` directly, which only works because, in this
-installation, provisioned users appear to receive the same numeric ID in
+installation, provisioned users receive the same numeric ID (their COmanage `DccDocDbID` identifier) in
 `Author`, `EmailUser` and `RemoteUser`; see section 4.)
 
 **Login mapping.** Apache/Shibboleth put the user's
@@ -1022,15 +1022,19 @@ Observations from the data that are consistent with this (none of them is
 asserted by the REST code itself):
 
 * `Author`, `EmailUser` and `RemoteUser` all have `AUTO_INCREMENT =
-  1000728`, and the newest rows have IDs just above 1,000,000. The
-  provisioner appears to insert all three rows for a person with the same
-  explicit ID (1,000,000 + a COmanage identifier), which is also what makes
-  `CanModify`'s `SubmitterID == $EmailUserID` comparison work.
-* `UsersGroup` has ~187,000 rows for ~720 users with many identical
-  duplicates per sync timestamp; the provisioner appears to insert
-  memberships without checking for existing rows.
+  1000728`, and the newest rows have IDs just above 1,000,000. Confirmed from
+  the plugin source: the provisioner inserts all three rows for a person with
+  the same explicit ID, the person's COmanage `DccDocDbID` identifier, and
+  also stores it in `EmailUser.EmployeeNumber`. This is what makes
+  `CanModify`'s `SubmitterID == $EmailUserID` comparison work today.
+* `UsersGroup` is heavily duplicated (35,971 rows for 962 real memberships
+  in the live database). Confirmed cause: the REST API returns 100 rows per
+  page and the provisioner reads only the first page, so members of
+  `CEConsortium` beyond the first 100 are re-inserted on every group sync.
+  See [rest-api.md](rest-api.md).
 * Group names `CO:admins` and `CO:COU:Project:members:active` are COmanage
-  group names.
+  group names: the provisioner synchronises only COmanage groups whose name
+  exactly matches a `SecurityGroup.Name`, and never creates groups itself.
 
 ## 5. Operational notes
 
