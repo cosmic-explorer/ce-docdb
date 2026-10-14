@@ -68,7 +68,11 @@ PREAMBLE
 
   foreach $EventID (sort EventsByDate keys %Conferences) { #FIXME use join
     my $label = $Conferences{$EventID}{Full};
-    $label =~ s/\'/\\\'/; # Escape single quotes
+    # Escape for a single-quoted JavaScript string literal.
+    $label =~ s/\\/\\\\/g;
+    $label =~ s/\'/\\\'/g;
+    $label =~ s/[\r\n]+/ /g;
+    $label =~ s/</\\x3c/g;
     print "event[\'$EventID\'] = \'$label\';\n"; 
   }   
 

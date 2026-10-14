@@ -59,8 +59,10 @@ sub LocalSearch ($) {
 
   my $OutFormat = $params{outformat} || "HTML";
 
-  $InnerLogic  = $params{innerlogic} || "AND";
-  $OuterLogic  = $params{outerlogic} || "AND";
+  # The logic operators are spliced into SQL, so normalise them to the only
+  # two accepted values instead of trusting the request.
+  $InnerLogic  = (defined $params{innerlogic} && uc($params{innerlogic}) eq "OR") ? "OR" : "AND";
+  $OuterLogic  = (defined $params{outerlogic} && uc($params{outerlogic}) eq "OR") ? "OR" : "AND";
 
   $NumberSearch           = $params{numbersearch};
   $NumberSearchMode       = $params{numbersearchmode};
@@ -233,6 +235,11 @@ sub LocalSearch ($) {
   $Afterday   = $params{afterday};
   $Aftermonth = $params{aftermonth};
   $Afteryear  = $params{afteryear};
+  # Date parts are placed in SQL literals: accept only digits (or the
+  # form's placeholders), otherwise ignore the date restriction.
+  unless (!defined $Afterday  || $Afterday  eq "--"   || $Afterday  =~ /^\d{1,2}$/) { $Afterday  = "--";   }
+  unless (!defined $Afteryear || $Afteryear eq "----" || $Afteryear =~ /^\d{4}$/)   { $Afteryear = "----"; }
+  unless (!defined $Aftermonth || exists $ReverseAbrvMonth{$Aftermonth})            { $Aftermonth = "---"; }
   if ($Afteryear && $Afteryear ne "----") {
      if ($Aftermonth eq "---") {$Aftermonth = "Jan";}
      if ($Afterday   eq "--")  {$Afterday   = "1";}
@@ -242,6 +249,9 @@ sub LocalSearch ($) {
   $Beforeday   = $params{beforeday};
   $Beforemonth = $params{beforemonth};
   $Beforeyear  = $params{beforeyear};
+  unless (!defined $Beforeday  || $Beforeday  eq "--"   || $Beforeday  =~ /^\d{1,2}$/) { $Beforeday  = "--";   }
+  unless (!defined $Beforeyear || $Beforeyear eq "----" || $Beforeyear =~ /^\d{4}$/)   { $Beforeyear = "----"; }
+  unless (!defined $Beforemonth || exists $ReverseAbrvMonth{$Beforemonth})            { $Beforemonth = "---"; }
   if ($Beforeyear && $Beforeyear ne "----") {
      if ($Beforemonth eq "---") {$Beforemonth = "Dec";}
      if ($Beforeday   eq "--")  {
