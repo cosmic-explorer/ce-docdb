@@ -98,9 +98,9 @@ sub send_email {
     use Email::Simple::Creator ();
     use Try::Tiny;
     my ($sender, $rcpts, $subject, $msg) = @_;
-open BLA, ">>/tmp/log.dat";
-print BLA "send_email_new called for $rcpts\n";
-close BLA;
+    # Header values must be single-line.
+    $subject =~ s/[\r\n]+/ /g;
+    $rcpts   =~ s/[\r\n]+/ /g;
     my $message = Email::Simple->create(
       header => [
         From => $sender,
@@ -119,9 +119,6 @@ close BLA;
         syslog('warning', "DCC sendmail error: $_");
         warn "DCC ERROR: sendmail failed: $_";
     } and syslog('warning', "dcc sent mail to $rcpts about $subject");
-open BLA, ">>/tmp/log.dat";
-print BLA "send_email closed sendmail\n";
-close BLA;
 }
 
 sub getUniqueID {

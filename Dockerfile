@@ -14,6 +14,17 @@ FROM ${BASE_IMAGE}
 # public instance keep their absolute targets and are copied as symlinks.
 COPY usr1/www/cgi-bin/ /usr1/www/cgi-bin/
 
+# COPY merges with the frozen base image and cannot delete files it inherited,
+# so scripts retired by the security hot-fixes are removed explicitly:
+# MigrationHelper (H6, unauthenticated bulk publish), test.pl (L17, Sentry
+# DSN), and three LIGO-era diagnostics that echoed request environment and
+# identity to the browser or to /tmp (auth.sh, test.sh, remote_user.sh).
+RUN rm -f /usr1/www/cgi-bin/private/DocDB/MigrationHelper \
+          /usr1/www/cgi-bin/test.pl \
+          /usr1/www/cgi-bin/private/DocDB/auth.sh \
+          /usr1/www/cgi-bin/private/DocDB/test.sh \
+          /usr1/www/cgi-bin/private/DocDB/remote_user.sh
+
 # Web root pieces that live in the image. usr1/www/html/DocDB and
 # usr1/www/html/public are host bind mounts and are excluded by .dockerignore.
 COPY usr1/www/html/ /usr1/www/html/
