@@ -17,9 +17,9 @@ unless stated.
 
 | Repository | Branch | PR | Content | Built image |
 |------------|--------|----|---------|-------------|
-| ce-docdb | `main` | | snapshot + docs, no code fixes | `cosmicexplorer/dcc:ce-6859fde355eb` (pre-review build of the snapshot) |
-| ce-docdb | `hotfix-release-1` | [#1](https://github.com/cosmic-explorer/ce-docdb/pull/1) | Release 1 security fixes (C1-C3, H1-H4, H6, H7, H11-H17, M4, M10-M13, L11, L17, H5 partial) | `cosmicexplorer/dcc:ce-ff378a22bb8e` |
-| ce-docdb | `backport-opendcc` (on hotfix) | [#2](https://github.com/cosmic-explorer/ce-docdb/pull/2) | `InputValidation.pm`, escaped message stacks (H8), `prefilter.tcl` fixes | `cosmicexplorer/dcc:ce-0ff3193cf099` |
+| ce-docdb | `main` | | snapshot + docs, no code fixes | none kept |
+| ce-docdb | `hotfix-release-1` | [#1](https://github.com/cosmic-explorer/ce-docdb/pull/1) | Release 1 security fixes (C1-C3, H1-H4, H6, H7, H11-H17, M4, M10-M13, L11, L17, H5 partial) | `cosmicexplorer/dcc:ce-1658d4c7b121` |
+| ce-docdb | `backport-opendcc` (on hotfix) | [#2](https://github.com/cosmic-explorer/ce-docdb/pull/2) | `InputValidation.pm`, escaped message stacks (H8), `prefilter.tcl` fixes | `cosmicexplorer/dcc:ce-58b5fb4f2582` |
 | ce-it-infrastructure | `dcc-login-eppns` | none yet | folds the live `/login` ePPN allow-list into the Dockerfile | |
 | ce-it-infrastructure | `fix-rest-api-pagination` | [#6](https://github.com/cosmic-explorer/ce-it-infrastructure/pull/6) | API returns whole lists; `rest-dcc` 1.2.2 | image must be built on the host |
 | ce-docdb | `codex/ce-docdb-unified-review-2026-10-14` (Geoffrey Lovelace, GPT Codex) | none | re-implementation of Release 1 with per-finding tests, 9 extra fixes, 1.2 MB review archive; see `docs/assessment-codex-branch-2026-10-14.md`. **Do not merge wholesale: its `RemoteUserHasAccess` rewrite would deny all private downloads.** | |
