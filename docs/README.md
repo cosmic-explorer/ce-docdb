@@ -13,6 +13,7 @@ Start with [architecture.md](architecture.md) for the big picture.
 | [search-and-listing.md](search-and-listing.md) | Home page, ListBy, Search, List* scripts, topics/keywords/authors/types, preferences |
 | [meetings-and-signoffs.md](meetings-and-signoffs.md) | Events, meetings, sessions, talks, talk hints, sign-off workflow, e-mail notifications |
 | [administration.md](administration.md) | Administration pages, user access applications, public instance differences, client-side JavaScript |
+| [rest-api.md](rest-api.md) | The REST API and OAuth2 path COmanage uses to provision users and groups: components, token flow, endpoints, operating notes |
 | [security-review.md](security-review.md) | Findings of the October 2026 code review with severity, evidence and fixes |
 | [operations.md](operations.md) | Runbook: health, logs, database access and backup, users, GLIMPSE, TLS, Shibboleth, secrets |
 | [../UPDATING.md](../UPDATING.md) | How to build and deploy a code change so it survives reboots |

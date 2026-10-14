@@ -660,6 +660,26 @@ Fix: encode at output, as `TopicLink` already does.
 * **I6** `Params/Validate*.pm` (Params::Validate 0.89) is vendored and
   unused.
 
+## Adjacent component: the REST API and OAuth2 services
+
+Not part of this repository (source in `ce-it-infrastructure/rest-dcc`), but
+reviewed because they write the user and group tables; details in
+[rest-api.md](rest-api.md).
+
+* **A1 [Medium, CONFIRMED]** `auth.js` logs every bearer token in clear text
+  to the container log; anyone who can read `docker service logs dcc_rest-api`
+  can replay a live token. Remove the `console.log` of the token.
+* **A2 [Medium, CONFIRMED]** Any active Hydra access token is accepted
+  regardless of client, scope or subject, and every endpoint allows create,
+  update and delete, including `SecurityGroup.CanAdminister` and `UsersGroup`
+  for any group. Acceptable only while the `/login` allow-list is the sole way
+  to obtain a token; add client-ID and scope checks in the introspection
+  handler.
+* **A3 [Medium, CONFIRMED]** Membership inserts are not idempotent, producing
+  the `UsersGroup` duplication in M5; no values are validated before storage.
+* **A4 [Low]** Node 12, Express 4.16, Sequelize 5, node-fetch 2 and Hydra
+  v1.0.8 are all end-of-life; Dependabot flags the Node dependencies.
+
 ## Remediation plan
 
 **Release 1 (hot-fix, same day it can be scheduled):** C1, C2, C3, H1, H2,
@@ -676,9 +696,9 @@ tightening in H5 after a test deploy.
 clean-up plus REST API change in ce-it-infrastructure), the L19 defects, and
 the LIGO leftovers.
 
-**Outside this repository:** the REST API (`rest-dcc`) should stop
-re-inserting `UsersGroup` rows and should validate names; the Sentry key in
-L17 should be revoked; Dependabot reports 8 vulnerabilities in the
+**Outside this repository:** the REST API items A1 to A4 (stop logging tokens,
+check client and scope, make membership inserts idempotent, validate names,
+update dependencies); the Sentry key in L17 should be revoked; Dependabot reports 8 vulnerabilities in the
 ce-it-infrastructure Node dependencies.
 
 ## Coverage notes
