@@ -65,9 +65,15 @@ local-only image works but prints a registry warning; that is expected.
 - The Codex branch's useful content is now in `release-2` (merged) and in the
   review's appendix; the branch can be deleted. A local backup of it is on
   this host as branch `geoffrey-review` (not pushed).
-- The COmanage plugin still attributes membership-removal history records to
-  the last member iterated rather than the removed person (noted by the
-  COmanage maintainer; follow-up PR pending on their side).
+- COmanage side, all merged 2026-10-14 evening: comanage-registry #2 (history
+  attribution of removals, refresh tokens only on demand), #3 (Mailman
+  provisioner back-ports), #4 (`dccAddMembership` treats finale-rest's
+  HTTP 400 "must be unique" on a duplicate `UsersGroup` POST as already
+  present). #4 was checked against the API's actual error shape and against
+  the vendored Guzzle 6.4.1, which still maps the plugin's `exceptions =>
+  false` to `http_errors`, so a 400 reaches the status check instead of
+  throwing. The mail cert-renewal cron fix (infra #3) was relayed to the
+  ce-services maintainer as well.
 - Drop `UsersGroup_before_dedupe` in the DCC database after a week of clean
   provisioning.
 - ce-it-infrastructure's two old PRs from Alex Nitz were resolved 2026-10-14:
