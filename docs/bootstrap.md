@@ -160,7 +160,7 @@ registry.
 The bootstrap describes the state as of 2019. Three things changed in the
 running container afterwards and were never fed back into the infrastructure
 repository: the `/login` ePPN allow-list in `dcc-dev.conf` (now folded into
-the infrastructure Dockerfile on branch `dcc-login-eppns`), the XSS hot-fix in
+the infrastructure Dockerfile in ce-it-infrastructure PR #8), the XSS hot-fix in
 `ListBy`, and the InCommon MDQ signing certificate in `/etc/shibboleth`. All
 three are captured in this repository. `shibboleth2.xml` and
 `attribute-map.xml` were also edited on the host (they are bind mounts, so

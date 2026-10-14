@@ -38,7 +38,7 @@ Previous state, for the record:
 | ce-docdb | `main` | | snapshot + docs, no code fixes | none kept |
 | ce-docdb | `hotfix-release-1` | [#1](https://github.com/cosmic-explorer/ce-docdb/pull/1) | Release 1 security fixes (C1-C3, H1-H4, H6, H7, H11-H17, M4, M10-M13, L11, L17, H5 partial) | `cosmicexplorer/dcc:ce-1658d4c7b121` |
 | ce-docdb | `backport-opendcc` (on hotfix) | [#2](https://github.com/cosmic-explorer/ce-docdb/pull/2) | `InputValidation.pm`, escaped message stacks (H8), `prefilter.tcl` fixes | `cosmicexplorer/dcc:ce-58b5fb4f2582` |
-| ce-it-infrastructure | `dcc-login-eppns` | none yet | folds the live `/login` ePPN allow-list into the Dockerfile | |
+| ce-it-infrastructure | `dcc-login-eppns` | [#8](https://github.com/cosmic-explorer/ce-it-infrastructure/pull/8) | folds the live `/login` ePPN allow-list into the Dockerfile; no deploy needed | open |
 | ce-it-infrastructure | `fix-rest-api-pagination` | [#6](https://github.com/cosmic-explorer/ce-it-infrastructure/pull/6), merged | API returns whole lists; `rest-dcc` 1.2.2 | **deployed 2026-10-14**: `dcc_rest-api` runs `cosmicexplorer/rest-dcc:1.2.2`, built on the host from master `71c30a0`; `dcc.yml` pins it and the DCC tag (#7, merged) |
 | ce-docdb | `release-2` (on backport-opendcc) | [#3](https://github.com/cosmic-explorer/ce-docdb/pull/3) | the correct fixes from the Codex review (topic cycles, doctype IDs, meeting bugs, XML dedupe, landing-page link, H7 bind values), fail-closed authorizer on stdin, drift-guard error handling, his Perl regression suite (285 assertions), doc corrections, and his 250-row findings inventory in the review | `cosmicexplorer/dcc:ce-cef36b92168d` |
 | ce-docdb | `codex/ce-docdb-unified-review-2026-10-14` (Geoffrey Lovelace, GPT Codex; to be deleted) | none | re-implementation of Release 1 with per-finding tests, 9 extra fixes, 1.2 MB review archive; see `docs/assessment-codex-branch-2026-10-14.md`. **Do not merge wholesale: its `RemoteUserHasAccess` rewrite would deny all private downloads.** | |
@@ -58,7 +58,7 @@ local-only image works but prints a registry warning; that is expected.
 2. ~~Merge ce-it-infrastructure `#6`, build and roll `rest-dcc:1.2.2`~~ Done 2026-10-14.
 3. ~~Deploy comanage-registry `#1`~~ Done 2026-10-14 22:45 UTC (merged master `990759f5` on the roster host).
 4. ~~Run `scripts/dedupe-usersgroup.sql`~~ Done 2026-10-14 22:50 UTC: 35,971 rows reduced to 962 (one per membership), `UNIQUE KEY EmailUserGroup (EmailUserID, GroupID)` added, duplicate inserts verified rejected, backup kept as `UsersGroup_before_dedupe` (drop it once the next few syncs are clean). The CEConsortium reprovision (CO Group 16, DCC target 2) at 22:53 UTC made 0 inserts and 2 deletes (two people no longer in the COmanage group, one of them already an inactive author); `UsersGroup` is at 960 rows = 960 memberships, CEConsortium 737. The duplication bug is closed end to end. Drop `UsersGroup_before_dedupe` after a week of clean syncs.
-5. Open a PR for `dcc-login-eppns` (or fold it into `#6`).
+5. Merge ce-it-infrastructure PR #8 (`dcc-login-eppns`). No deploy follows; it only affects base-image rebuilds.
 
 ## Open items for the user
 
