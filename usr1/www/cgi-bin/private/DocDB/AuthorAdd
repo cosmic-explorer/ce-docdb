@@ -70,7 +70,7 @@ $AuthorInsert -> execute($FirstName,$MiddleInitials,$LastName,$InstitutionID);
 my $AuthorID = $AuthorInsert -> {mysql_insertid}; # Works with MySQL only
                            
 if ($AuthorID) {
-  push @ActionStack,"$FirstName $MiddleInitials $LastName has been added as an author. You can <a href=\"$AuthorAddForm\">add another</a> author."; 
+  push @ActionStack,"$FirstName $MiddleInitials $LastName has been added as an author. Use the Add Author form again to add another.";
 } else {
   unless (@ErrorStack) {
     push @ErrorStack,"Something unknown went wrong. Contact an administrator.";
