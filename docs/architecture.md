@@ -167,7 +167,7 @@ status 0 (allow) or 1 (deny) based on `CanAccessRevision`. The group name
   and an ORCID gateway IdP. Attributes consumed are listed in
   `attribute-map.xml` (ePPN, mail, displayName, givenName, sn, affiliation).
   The embedded discovery service at `/shibboleth-ds/` is the landing page.
-* **COmanage → REST API**: membership changes in the Cosmic Explorer COmanage
+* **COmanage → REST API** (see [rest-api.md](rest-api.md)): membership changes in the Cosmic Explorer COmanage
   registry are pushed through the `rest-dcc` API into the `Author`,
   `EmailUser`, `RemoteUser`, `UsersGroup`, `SecurityGroup` and `Institution`
   tables. DocDB itself never creates users for Shibboleth logins; an ePPN that
