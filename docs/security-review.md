@@ -739,7 +739,7 @@ partial). Every
 modified Perl file passes `perl -c` under the production image's Perl and the
 Apache configuration passes `httpd -t`; a compile check of every script in
 the image found only the three pre-existing `CGI::Untaint` failures (L30).
-The built image for the branch head is `cosmicexplorer/dcc:ce-ff378a22bb8e`. The branch has **not** been deployed;
+The built images are `cosmicexplorer/dcc:ce-1658d4c7b121` (hotfix) and `cosmicexplorer/dcc:ce-58b5fb4f2582` (back-port, on top of it); each corresponds to its branch head before the final docs-only commits. The branch has **not** been deployed;
 see [UPDATING.md](../UPDATING.md) for the procedure, and test the Apache
 change on a staging container first if possible. Behavioural notes for the
 deployer:
