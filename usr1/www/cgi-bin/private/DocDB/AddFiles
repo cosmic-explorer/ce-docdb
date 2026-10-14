@@ -130,9 +130,9 @@ if ($DocumentID > 0 && $Version > 0) {
 }
 
 if ($Preferences{Options}{SubmitAgree} && !$SubmitAgree) {
-   push @ErrorStack,'You must check the box near with this statement: <br/>'.
+   push @ErrorStack,'You must check the box near with this statement: '.
                     $Preferences{Options}{SubmitAgree}.
-                    '<br/>to add files to the document.';
+                    ' to add files to the document.';
    bailOutOfAddFiles();
 }
 
@@ -222,8 +222,8 @@ if (scalar(@securities) == 0 && $ResetState == 1) {
                   -modifyids => \@ModifyGroups);
    
    UnlinkDirectory($DocumentID, $Version);
-   push @WarnStack,"The public status of this document has been revoked.<br>
-                   The document must be recertified.<p>";
+   push @WarnStack,"The public status of this document has been revoked. ".
+                   "The document must be recertified.";
 }
 
 ### Remove signatures from document if they existed
@@ -244,7 +244,7 @@ my $full_docid = FullDocumentID($DocumentID);
 $DocRevID   = FetchRevisionByDocumentAndVersion($DocumentID,$Version);
 
 unless ($DocRevID) {
-  push @ErrorStack,"This document does not exist.<p>\n";
+  push @ErrorStack,"This document does not exist.";
   bailOutOfAddFiles();
 }
 

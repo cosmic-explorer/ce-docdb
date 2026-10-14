@@ -79,16 +79,17 @@ the fixes do not have to be re-applied after a future migration.
 
 In rough order of value against effort:
 
-1. **`ResponseElements.pm` escaping (H8).** A seven-line change, exactly
-   what our review asks for. Port it as is, replacing
-   `InputValidation::escape_html` with `HTML::Entities::encode` or adopt
-   item 2 first.
-2. **`InputValidation.pm` itself.** Standalone, no schema dependency. Drop
-   it into our tree and use it for new fixes (`validate_id`,
-   `validate_allowlist`, `escape_html`, `escape_attr`) instead of ad-hoc
-   regexes. Do not import the per-script `validate_or_exit` rewrites
-   wholesale: those scripts also carry the 3.4/3.5 functional changes and the
-   `ParallelSignoff` dependency.
+1. **`ResponseElements.pm` escaping (H8).** Done on branch
+   `backport-opendcc`: every error, warning, action and debug message is
+   escaped. Thirteen messages that relied on markup were rewritten as plain
+   text.
+2. **`InputValidation.pm` itself.** Done on the same branch: the module is
+   in the tree (with a public-instance symlink) and should be used for new
+   fixes (`validate_id`, `validate_allowlist`, `escape_html`, `escape_attr`)
+   instead of ad-hoc regexes. Not imported: the per-script `validate_or_exit`
+   rewrites, which also carry the 3.4/3.5 functional changes and the
+   `ParallelSignoff` dependency. Note that `escape_html` deliberately does not
+   encode a bare `&` (to avoid double-encoding entities) and encodes `=`.
 3. **`isActiveUser` (`SecuritySQL.pm`).** A clean helper for "is this
    EmailUser's Author active", which our `CanAccess` does inline.
 4. **Upstream's Playwright test suite** (`tests/integration/playwright`,
@@ -97,10 +98,20 @@ In rough order of value against effort:
    test instance of ours to run against; it is the only existing end-to-end
    test corpus for DocDB and would make our hot-fix releases far safer to
    deploy.
-5. **The GLIMPSE indexing scripts** (`dcc-glimpse-files/bin`): the 2025
-   `prefilter.tcl` indexes many binary types (PDF via xpdf/readpdf, Office
-   via catdoc, PostScript, HDF5, zip). Our image's `glimpse-incr.sh` already
-   references a prefilter, so diff the two before replacing.
+5. **The GLIMPSE indexing scripts** (`dcc-glimpse-files/bin`). On
+   inspection this is mostly a new *pipeline*, not a better prefilter:
+   upstream's `glimpse-incr.sh` is a Redis-queue worker that sends PDFs to a
+   Tika server and runs under systemd, `glimpse-init.sh` builds partitioned
+   indexes, and `glimpse-query.sh` reads them. None of that fits our
+   supervisord container without adding Redis and Tika to the stack.
+   `prefilter.tcl` itself differs from the 2019 copy in our image by ten
+   lines, two of which are real fixes (no report file written to `/root` on
+   every run; a PostScript file that crashes `ps2ascii` no longer aborts the
+   indexer). Those two are back-ported on branch `backport-opendcc`; the
+   pipeline is not. The prefilter also calls `catdoc`, `h5dump` and
+   `ps2ascii`, which the image does not have, so Office, HDF5 and PostScript
+   content is not indexed today; installing those packages in the image would
+   be a cheap improvement.
 6. **`XMLUpdate`**: batch metadata update of many documents by uploading
    XML. Useful for administrators; self-contained like `XMLUpload`.
 7. **`DocumentTree`/`CallDocumentTree`**: a document-tree view (cross

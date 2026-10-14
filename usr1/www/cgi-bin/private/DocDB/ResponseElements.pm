@@ -28,13 +28,13 @@ require "AuthorHTML.pm";   #FIXME: Remove, move references to correct place
 require "TopicHTML.pm";    #FIXME: Remove, move references to correct place
 require "FileHTML.pm";     #FIXME: Remove, move references to correct place
 require "RevisionHTML.pm"; #FIXME: Remove, move references to correct place
+require "InputValidation.pm";  # output escaping (back-ported from open-DCC 3.5.3)
 require "DocumentSQL.pm";  #FIXME: Remove, move references to correct place
 
 sub PrintTitle {
   my ($Title) = @_;
-  require HTML::Entities;
   if ($Title) {
-    print "<h1>".HTML::Entities::encode($Title)."</h1>\n";
+    print "<h1>".InputValidation::escape_html($Title)."</h1>\n";
   } else {
     print "<h1><b>Title:</b> none<br></h1>\n";
   }
@@ -49,7 +49,7 @@ sub WarnPage () { # Non-fatal errors
       print "<dt class=\"Warning\">Warning: </dt>\n";
     }
     foreach $message (@WarnStack) {
-      print "<dd>$message</dd>\n";
+      print "<dd>".InputValidation::escape_html($message)."</dd>\n";
     }
     print "</dl>\n";
   }
@@ -61,13 +61,13 @@ sub DebugPage (;$) { # Debugging output
   my ($CheckPoint) = @_;
   if (@DebugStack && $DebugOutput) {
     print "<dl class=\"debug\">\n";
-    print "<dt class=\"Warning\">Debugging messages: $CheckPoint</dt>\n";
+    print "<dt class=\"Warning\">Debugging messages: ".InputValidation::escape_html($CheckPoint)."</dt>\n";
     foreach my $Message (@DebugStack) {
-      print "<dd>$Message</dd>\n";
+      print "<dd>".InputValidation::escape_html($Message)."</dd>\n";
     }
     print "</dl>\n";
   } elsif ($CheckPoint && $DebugOutput) {
-    print "<div>No Debugging messages: $CheckPoint<br/></div>\n";
+    print "<div>No Debugging messages: ".InputValidation::escape_html($CheckPoint)."<br/></div>\n";
   }
   @DebugStack = ();
   return @DebugStack;
@@ -102,7 +102,7 @@ sub ErrorPage { # Fatal errors, continues page
              request:</dt>\n";
     }
     foreach $message (@ErrorStack) {
-      print "<dd>$message</dd>\n";
+      print "<dd>".InputValidation::escape_html($message)."</dd>\n";
     }
     print "</dl>\n";
     print "<p/>\n";
@@ -116,7 +116,7 @@ sub ActionReport {
     print "<dl class=\"Action\">\n";
     print "<dt class=\"Action\">Action(s) taken:</dt>\n";
     foreach $Message (@ActionStack) {
-      print "<dd>$Message</dd>\n";
+      print "<dd>".InputValidation::escape_html($Message)."</dd>\n";
     }
     print "</dl>\n";
   }
