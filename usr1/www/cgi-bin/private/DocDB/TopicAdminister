@@ -86,6 +86,15 @@ unless (CanAdminister()) {
 EndPage();
 GetTopics();
 
+# Validate before changing either the names or hierarchy. Traversal also
+# tolerates pre-existing cycles. This check is not a concurrency lock: graph
+# changes from concurrent administration requests still require serialization.
+if ($Action eq "Modify") {
+  my $ParentError = TopicParentError($TopicID,$ParentTopicID);
+  push @ErrorStack,$ParentError if $ParentError;
+  EndPage();
+}
+
 if ($Action eq "Delete") {
   # FIXME?: Force option is not going to be compatible with children with 
   # multiple parents In that case we would need to determine if any topics
@@ -113,11 +122,7 @@ if ($Action eq "Delete") {
 
 # Deal with parent changes   
 
-  if ($ParentTopicID == $TopicID) {
-    push @WarnStack,"You cannot set a topic to be its own parent. No action taken.";
-  }  
-
-  if ($ParentTopicID && $ParentTopicID != $TopicID) { 
+  if ($ParentTopicID) {
     push @ActionStack,"Updated parent topic of (sub)topic.";
    
     my $Delete = $dbh -> prepare("delete from TopicHierarchy where TopicID=?");

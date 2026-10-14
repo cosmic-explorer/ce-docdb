@@ -44,45 +44,56 @@ sub TopicAndSubTopics {
 
   GetTopics();
   
-  my @TopicIDs = ($TopicID);
-  
-  foreach my $ChildID (@{$TopicChildren{$TopicID}}) {
-    my @ChildIDs = TopicAndSubTopics({ -topicid => $ChildID });
-    push @TopicIDs,@ChildIDs;
+  # A topic may have multiple parents, and old data may contain cycles.
+  # Visit each descendant once instead of recursing once for every path.
+  my @TopicIDs;
+  my @Pending = ($TopicID);
+  my %Seen;
+  while (@Pending) {
+    my $ID = pop @Pending;
+    next if $Seen{$ID}++;
+    push @TopicIDs,$ID;
+    push @Pending,reverse @{$TopicChildren{$ID} || []};
   }
-  
-  return Unique(@TopicIDs);  
+
+  return @TopicIDs;
+}
+
+sub TopicParentError {
+  my ($TopicID,$ParentTopicID) = @_;
+
+  return "You must select an existing topic to modify."
+    unless $TopicID && exists $Topics{$TopicID};
+  # An omitted parent means leave the existing hierarchy unchanged.
+  return "" unless $ParentTopicID;
+  return "You must select an existing parent topic."
+    unless exists $Topics{$ParentTopicID};
+  return "You cannot set a topic to be its own parent. No action taken."
+    if $ParentTopicID == $TopicID;
+  my @Descendants = TopicAndSubTopics({ -topicid => $TopicID });
+  return "You cannot set a descendant of a topic as its parent. No action taken."
+    if grep { $_ == $ParentTopicID } @Descendants;
+  return "";
 }
 
 sub BuildTopicProvenance {
   %TopicProvenance = ();
-  
-  # When finished, @{$TopicProvenance{$TopicID}} is an array for every $TopicID, 
-  # which has that TopicID as its first element, its parent as its second, 
-  # grandparent as the third, etc.
-  
+
+  # Keep the ordered display path used by sorting and indentation. With
+  # multiple parents this retains the legacy last-parent choice; descendant
+  # reachability above must instead follow every branch.
   foreach my $TopicID (keys %Topics) {
-    push @{$TopicProvenance{$TopicID}},$TopicID;
-  }
-  
-  # Check each provenance entry to see if we can append to the list
-  # FIXME: Cannot deal with multiple parents.
-  
-  my $Found = $TRUE;
-  while ($Found) {
-    $Found = $FALSE;
-    foreach my $TopicID (keys %Topics) {
-      my @IDs = @{$TopicProvenance{$TopicID}};
-      my $LastID = pop @IDs;
-      if (@{$TopicParents{$LastID}}) {
-        $Found = $TRUE;
-        my @ParentIDs = @{$TopicParents{$LastID}};
-        my $FirstParentID = pop @ParentIDs;
-        push @{$TopicProvenance{$TopicID}},$FirstParentID;
-      }  
+    my %Seen;
+    my $ID = $TopicID;
+    my @IDs;
+    while (defined $ID && exists $Topics{$ID} && !$Seen{$ID}++) {
+      push @IDs,$ID;
+      my @Parents = @{$TopicParents{$ID} || []};
+      $ID = @Parents ? $Parents[-1] : undef;
     }
+    $TopicProvenance{$TopicID} = \@IDs;
   }
-  
+
   return;
 }
 
