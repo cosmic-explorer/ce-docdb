@@ -17,7 +17,10 @@ entry point returns 500 after any restart while shibd verifies the InCommon
 IdP aggregate at 100% CPU; on 2026-10-14 that took 30 minutes (14:58 to
 15:28 local) before the login redirect returned. Expected; it clears on its
 own, and the public instance works throughout.
-The tag is pinned in ce-it-infrastructure `dcc.yml` by PR #7.
+A real login and a direct file download (through the rewritten
+`RemoteUserHasAccess`) were confirmed by the user the same afternoon; the
+old 3.3.0 container was then removed. The tag is pinned in ce-it-infrastructure
+`dcc.yml` by PR #7.
 
 Previous state, for the record:
 
