@@ -176,6 +176,7 @@ sub TopicListWithChildren { # Recursive routine
   my @TopicIDs   = exists $ArgRef->{-topicids}   ? @{$ArgRef->{-topicids}}  : ();
   my $Depth      = exists $ArgRef->{-depth}      ?   $ArgRef->{-depth}      : 1;
   my $CheckEvent = exists $ArgRef->{-checkevent} ?   $ArgRef->{-checkevent} : $FALSE; # name or provenance
+  my %Path = exists $ArgRef->{-path} ? %{$ArgRef->{-path}} : ();
 
   require "MeetingSQL.pm";
   require "MeetingHTML.pm";
@@ -189,6 +190,9 @@ sub TopicListWithChildren { # Recursive routine
       $HTML .= "<ul class=\"$Depth-deep\">\n";
     }  
     foreach my $TopicID (@TopicIDs) {
+      # Track only this path: a shared descendant must appear under each parent.
+      next if $Path{$TopicID};
+      my %ChildPath = (%Path, $TopicID => 1);
       if ($Depth > 1) {
         $HTML .= "<li>";
       } else {
@@ -206,7 +210,7 @@ sub TopicListWithChildren { # Recursive routine
 #      }    
       if (@{$TopicChildren{$TopicID}}) {
         $HTML .= "\n";
-        $HTML .= TopicListWithChildren({ -topicids => $TopicChildren{$TopicID}, -depth => $Depth+1 });
+        $HTML .= TopicListWithChildren({ -topicids => $TopicChildren{$TopicID}, -depth => $Depth+1, -path => \%ChildPath });
       } elsif ($Depth == 1) {
         $HTML .= '<br class="EmptyTopic" />';
       }  

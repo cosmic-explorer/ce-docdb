@@ -31,28 +31,25 @@ sub DocTypeSelect (;%) { # Scrolling selectable list for doc type search
 #  my $HelpLink = exists $ArgRef->{-helplink} ?   $ArgRef->{-helplink} : "";
 #  my $HelpText = exists $ArgRef->{-helptext} ?   $ArgRef->{-helptext} : "  my (%Params) = @_;
   
-  my $Booleans = "";
-  
-  if ($Disabled) {
-    $Booleans .= "-disabled";
-  }  
-  
-  my @DocTypeLabels = ();
-  @types = sort { $DocumentTypes{$a}{SHORT} cmp $DocumentTypes{$b}{SHORT} } keys %DocumentTypes;
+  my %Options;
+  $Options{-disabled} = "disabled" if $Disabled;
+
+  my %DocTypeLabels;
+  my @types = sort { $DocumentTypes{$a}{SHORT} cmp $DocumentTypes{$b}{SHORT} } keys %DocumentTypes;
 
   foreach my $DocTypeID (@types) {
     if ($Format eq "short") {
       my $short_label = $DocumentTypes{$DocTypeID}{SHORT};
-      push (@DocTypeLabels, $short_label);
+      $DocTypeLabels{$DocTypeID} = $short_label;
     } elsif ($Format eq "full") {
       my $long_label = $DocumentTypes{$DocTypeID}{SHORT}." [".$DocumentTypes{$DocTypeID}{LONG}."]";
-      push (@DocTypeLabels, $long_label);
+      $DocTypeLabels{$DocTypeID} = $long_label;
     }
   }
    
   print FormElementTitle(-helplink => "doctype", -helptext => "Document type");   
   print $query -> scrolling_list(-size => 11, -name => "doctype", -multiple => $Multiple, 
-                              -values => \@DocTypeLabels, $Booleans);
+                              -values => \@types, -labels => \%DocTypeLabels, %Options);
 };
 
 

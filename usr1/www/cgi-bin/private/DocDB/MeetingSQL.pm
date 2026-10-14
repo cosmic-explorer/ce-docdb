@@ -190,6 +190,7 @@ sub MatchEvent ($) {
   my @MatchIDs = ();
   if ($Short) {
     $Short =~ tr/[A-Z]/[a-z]/;
+    $Short =~ s/([\\%_])/\\$1/g;
     $Short = "%".$Short."%";
     my $List = $dbh -> prepare(
        "select ConferenceID from Conference where LOWER(Title) like ?"); 
@@ -459,7 +460,7 @@ sub InsertEvent (%) {
   my $AltLocation      = exists $ArgRef->{-altlocation}      ?   $ArgRef->{-altlocation}      : "";
   my $URL              = exists $ArgRef->{-url}              ?   $ArgRef->{-url}              : "";
   my $ShowAllTalks     = exists $ArgRef->{-showalltalks}     ?   $ArgRef->{-showalltalks}     : 0;
-  my $Preample         = exists $ArgRef->{-preample}         ?   $ArgRef->{-preample}         : "";
+  my $Preamble         = exists $ArgRef->{-preamble}         ?   $ArgRef->{-preamble}         : "";
   my $Epilogue         = exists $ArgRef->{-epilogue}         ?   $ArgRef->{-epilogue}         : "";
   my @TopicIDs         = exists $ArgRef->{-topicids}         ? @{$ArgRef->{-topicids}}        : ();
   my @ModeratorIDs     = exists $ArgRef->{-moderatorids}     ? @{$ArgRef->{-moderatorids}}    : ();
@@ -646,7 +647,7 @@ sub DeleteEvent (%) {
     DeleteSession($SessionID);
   }   
   foreach my $SeparatorID (@SeparatorIDs) {
-    DeleteSessionSeparator($EventID);
+    DeleteSessionSeparator($SeparatorID);
   }   
   
   my $Delete = $dbh -> prepare("delete from Conference where ConferenceID=?");

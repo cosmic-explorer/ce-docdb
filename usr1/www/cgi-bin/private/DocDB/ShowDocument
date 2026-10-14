@@ -121,7 +121,7 @@ if (defined $Version && defined $AsOf) {
    if ($Version =~ /(^$|\s*\-[vx]\D*)/) {
 #      $Version = $Documents{$DocumentID}{NVersions};
       $Version = LastAccess($DocumentID);
-   } elsif ($Version =~ /^\d+$/) {
+   } elsif ($Version =~ /\A[0-9]+\z/) {
       # It's an int, yay!
    } else {
      $Version = 0;   
