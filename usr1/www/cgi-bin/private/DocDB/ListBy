@@ -385,13 +385,13 @@ unless ($Public) {
    require "FormElements.pm";
    print $query -> startform('GET',"ListBy");
    if ($EventGroupID) {
-      print "<input type=hidden name=eventgroupid value=$EventGroupID>\n";
+      print "<input type=\"hidden\" name=\"eventgroupid\" value=\"$EventGroupID\">\n";
    }
    if ($TopicID) {
-      print "<input type=hidden name=topicid value=$TopicID>\n";
+      print "<input type=\"hidden\" name=\"topicid\" value=\"$TopicID\">\n";
    }
    if ($AuthorID) {
-      print "<input type=hidden name=authorid value=$AuthorID>\n";
+      print "<input type=\"hidden\" name=\"authorid\" value=\"$AuthorID\">\n";
    }
    print "<center>\n"; 
    print "<div id='throttle'>\n";

@@ -141,8 +141,16 @@ if (defined $Version && defined $AsOf) {
 }
 
 if ($Mode eq 'qacheck') {
+   # Changing the QA state publishes or un-publishes a revision. Only
+   # administrators and certifiers may do that, and only for revisions they
+   # can see; the current state comes from the database, not the request.
+   unless ($DocRevID && (CanAdminister() || CanCertify()) && CanAccess($DocumentID,$Version)) {
+      push @ErrorStack,"You are not authorized to change the QA state of this document.";
+      bailOutOfShowDocument();
+   }
+   FetchDocRevisionByID($DocRevID);
    my $NewState = 1;
-   my $CurrentState = $QACheck;
+   my $CurrentState = $DocRevisions{$DocRevID}{QAcheck};
    if ($CurrentState == 1) { $NewState = 0 }
 
    &UpdateRevisionQAState($DocRevID, $NewState);

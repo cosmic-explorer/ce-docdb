@@ -39,7 +39,9 @@ $script_root = "/usr1/www/cgi-bin/private/DocDB/";
 $public_root = "/usr1/www/html/public/";
 
 # Places in local filesystem where XMLUpload can get files           
-@LocalUploadDirectories = ( "/usr1/www/E-Traveler/html/data", "/tmp" );
+# No local directories: XMLUpload may not import files from the server's
+# filesystem (the previous list included the shared /tmp).
+@LocalUploadDirectories = ();
 
 # Gives us "hostname" from $HOSTNAME
 use Sys::Hostname;

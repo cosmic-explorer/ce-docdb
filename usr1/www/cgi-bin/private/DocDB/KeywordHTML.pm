@@ -56,7 +56,7 @@ sub KeywordsbyKeywordGroup ($;$) {
     my $KeyLink;
     if ($KeyMode eq "chooser") {
       $KeyLink = "<a href=\"$ListKeywords?mode=chooser\" ".
-                 "onclick=\"InsertKeyword('$Keywords{$KeywordID}{Short}');\">$Keywords{$KeywordID}{Short}</a>";
+                 "onclick=\"InsertKeyword('".JSAttrEscape($Keywords{$KeywordID}{Short})."');\">".HTML::Entities::encode($Keywords{$KeywordID}{Short})."</a>";
     } else {
       $KeyLink = &KeywordLinkByID($KeywordID,-format => "short");
     }
@@ -230,14 +230,15 @@ sub KeywordLinkByID ($;%) {
   my $Keyword = $Keywords{$KeywordID}{Short};
   my $Link;
   
+  require HTML::Entities;
   unless ($NoLink) {  
-    $Link .= "<a href=\"$Search\?keywordsearchmode=anyword&amp;keywordsearch=$Keyword\">";
+    $Link .= "<a href=\"$Search\?keywordsearchmode=anyword&amp;keywordsearch=".CGI::escape($Keyword)."\">";
   }
   
   if ($Format eq "short") { 
-    $Link .= $Keywords{$KeywordID}{Short};
+    $Link .= HTML::Entities::encode($Keywords{$KeywordID}{Short});
   } elsif ($Format eq "long") {
-    $Link .= $Keywords{$KeywordID}{Long};
+    $Link .= HTML::Entities::encode($Keywords{$KeywordID}{Long});
   }  
 
   unless ($NoLink) {  
@@ -252,8 +253,10 @@ sub KeywordLink ($;%) { # FIXME: Allow parameters of short, long, full a la Lynn
 
   my $Format = $Params{-format} || "short"; # short, full
   
-  my $ret = "<a href=\"$Search\?keywordsearchmode=anyword&amp;keywordsearch=$Keyword\">";
-  $ret .= "$Keyword";
+  # Keywords are free text from the document form: encode for URL and HTML.
+  require HTML::Entities;
+  my $ret = "<a href=\"$Search\?keywordsearchmode=anyword&amp;keywordsearch=".CGI::escape($Keyword)."\">";
+  $ret .= HTML::Entities::encode($Keyword);
   $ret .=  "</a>";
   return $ret;
 }         
@@ -274,5 +277,16 @@ sub KeywordsBox (%) {
   print $query -> textfield (-name => 'keywords', -default => $KeywordsDefault, 
                              -size => 70, -maxlength => 240);
 };
+
+# Escape a value for use inside a single-quoted JavaScript string that is
+# itself inside a double-quoted HTML attribute.
+sub JSAttrEscape ($) {
+  my ($Text) = @_;
+  require HTML::Entities;
+  $Text =~ s/\\/\\\\/g;
+  $Text =~ s/'/\\'/g;
+  $Text =~ s/[\r\n]+/ /g;
+  return HTML::Entities::encode($Text);
+}
 
 1;

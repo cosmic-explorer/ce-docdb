@@ -161,7 +161,6 @@ sub PrintSignatureInfo ($) {
 
   my @SignatureSnippets = ();
 
-  open (DEBUG, ">>/tmp/debug.mca");
   foreach my $SignatureID (@SignatureIDs) {
     my $SignatureIDOK = &FetchSignature($SignatureID);
     if ($SignatureIDOK) {

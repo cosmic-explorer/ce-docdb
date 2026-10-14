@@ -180,7 +180,7 @@ my $LessFiles     = $params{LessFiles};
 my $MaxFiles      = $params{maxfiles} || 0;
 my $UniqueID      = $params{uniqueid};
 my $NumberSigned  = $params{nsigned};
-my $QAState       = $params{qastat} || 0;
+my $QAState       = (defined $params{qastat} && $params{qastat} eq "1") ? 1 : 0; # only 0 or 1
 my @XRefs         = split /,*\s+/,$params{xrefs} || ''; # Can be comma or space separated
 my @EventIDs          = $query -> param('events');
 my @RequestedTopicIDs = $query -> param('topics');
@@ -501,7 +501,14 @@ if ($Mode eq "use") {
    }
 
    # Change lower case to upper.
-   $Alias =~ tr/a-z/A-Z/;          
+   $Alias =~ tr/a-z/A-Z/;
+
+   # The alias becomes a directory name and appears in URLs and commands:
+   # accept only the documented form, one letter followed by 6-8 digits.
+   unless ($Alias =~ m/^[A-Z]\d{6,8}$/) {
+        push @ErrorStack, "A valid document number is one letter followed by six to eight digits.";
+        EndPage();
+   }
   
    $ExistingDocID = GetDocumentIDByAlias($Alias);
    if ($ExistingDocID) {
@@ -566,6 +573,12 @@ if      ($Mode eq "reserve" || $Mode eq "use") {
 if ($Mode eq "updatedb") { # New Document revision replaces old. Fetch
                            # old DocumentRevision and mark it obsolete
   my $OldRevID = &FetchRevisionByDocumentAndVersion($documentID,$version);
+  # The QA (certification) state carried forward comes from the database;
+  # only administrators and certifiers may change it through the form.
+  FetchDocRevisionByID($OldRevID);
+  unless (CanAdminister() || CanCertify()) {
+    $QAState = $DocRevisions{$OldRevID}{QAcheck} ? 1 : 0;
+  }
   my $ObsoleteRevision = $dbh -> prepare("update DocumentRevision set Obsolete=1 where DocRevID=?");
   $ObsoleteRevision -> execute($OldRevID);
 }
@@ -597,8 +610,8 @@ if (defined $SignoffState && length $SignoffState) {
 # Preserve the old qastat if only minor changes were made
 #
 if ($Mode eq "updatedb" && $ResetState == 0) {
-   my $FixQAState = $dbh -> prepare("update DocumentRevision set QAcheck=$QAState where DocRevID=?");
-   $FixQAState -> execute($DocRevID);
+   my $FixQAState = $dbh -> prepare("update DocumentRevision set QAcheck=? where DocRevID=?");
+   $FixQAState -> execute($QAState,$DocRevID);
 }
 
 ### Add reference information if it exists

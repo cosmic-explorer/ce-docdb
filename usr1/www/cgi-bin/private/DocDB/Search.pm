@@ -59,8 +59,10 @@ sub LocalSearch ($) {
 
   my $OutFormat = $params{outformat} || "HTML";
 
-  $InnerLogic  = $params{innerlogic} || "AND";
-  $OuterLogic  = $params{outerlogic} || "AND";
+  # The logic operators are spliced into SQL, so normalise them to the only
+  # two accepted values instead of trusting the request.
+  $InnerLogic  = (defined $params{innerlogic} && uc($params{innerlogic}) eq "OR") ? "OR" : "AND";
+  $OuterLogic  = (defined $params{outerlogic} && uc($params{outerlogic}) eq "OR") ? "OR" : "AND";
 
   $NumberSearch           = $params{numbersearch};
   $NumberSearchMode       = $params{numbersearchmode};
@@ -80,6 +82,11 @@ sub LocalSearch ($) {
   $FileDescSearchMode     = $params{filedescsearchmode};
   $FileContSearch         = $params{filecontsearch};
   $FileContSearchMode     = $params{filecontsearchmode};
+  # Only the four modes the glimpse wrapper understands are allowed; the value
+  # is passed to an external program, so anything else is rejected outright.
+  unless (defined $FileContSearchMode && $FileContSearchMode =~ /^(allword|anyword|allsub|anysub)$/) {
+    $FileContSearchMode = "anysub";
+  }
 
   my $AuthorManual        = $params{authormanual};
   my $RequesterManual     = $params{requestersmanual};
@@ -114,14 +121,14 @@ sub LocalSearch ($) {
   ###
   ### Work in progress.
   ###
-  $SimpleText         =~ s/[\'\"%_;]/\\$&/g;
+  $SimpleText         =~ s/[\\\'\"%_;]/\\$&/g;
   $NumberSearch       =~ s/[^\s\w+-\.]//go;
-  $TitleSearch        =~ s/[\'\"%_;]/\\$&/g;
-  $AbstractSearch     =~ s/[\'\"%_;]/\\$&/g;
-  $KeywordSearch      =~ s/[\'\"%_;]/\\$&/g;
+  $TitleSearch        =~ s/[\\\'\"%_;]/\\$&/g;
+  $AbstractSearch     =~ s/[\\\'\"%_;]/\\$&/g;
+  $KeywordSearch      =~ s/[\\\'\"%_;]/\\$&/g;
   $RevisionNoteSearch =~ s/[^\s\w+-\.]//go;
   $PubInfoSearch      =~ s/[^\s\w+-\.]//go;
-  $FileSearch         =~ s/[\'\"%_;]/\\$&/g;
+  $FileSearch         =~ s/[\\\'\"%_;]/\\$&/g;
   $FileDescSearch     =~ s/[^\s\w+-\.]//go;
   $FileContSearch     =~ s/[^\s\w+-\.]//go;
 
@@ -228,6 +235,11 @@ sub LocalSearch ($) {
   $Afterday   = $params{afterday};
   $Aftermonth = $params{aftermonth};
   $Afteryear  = $params{afteryear};
+  # Date parts are placed in SQL literals: accept only digits (or the
+  # form's placeholders), otherwise ignore the date restriction.
+  unless (!defined $Afterday  || $Afterday  eq "--"   || $Afterday  =~ /^\d{1,2}$/) { $Afterday  = "--";   }
+  unless (!defined $Afteryear || $Afteryear eq "----" || $Afteryear =~ /^\d{4}$/)   { $Afteryear = "----"; }
+  unless (!defined $Aftermonth || exists $ReverseAbrvMonth{$Aftermonth})            { $Aftermonth = "---"; }
   if ($Afteryear && $Afteryear ne "----") {
      if ($Aftermonth eq "---") {$Aftermonth = "Jan";}
      if ($Afterday   eq "--")  {$Afterday   = "1";}
@@ -237,6 +249,9 @@ sub LocalSearch ($) {
   $Beforeday   = $params{beforeday};
   $Beforemonth = $params{beforemonth};
   $Beforeyear  = $params{beforeyear};
+  unless (!defined $Beforeday  || $Beforeday  eq "--"   || $Beforeday  =~ /^\d{1,2}$/) { $Beforeday  = "--";   }
+  unless (!defined $Beforeyear || $Beforeyear eq "----" || $Beforeyear =~ /^\d{4}$/)   { $Beforeyear = "----"; }
+  unless (!defined $Beforemonth || exists $ReverseAbrvMonth{$Beforemonth})            { $Beforemonth = "---"; }
   if ($Beforeyear && $Beforeyear ne "----") {
      if ($Beforemonth eq "---") {$Beforemonth = "Dec";}
      if ($Beforeday   eq "--")  {
@@ -458,11 +473,10 @@ sub LocalSearch ($) {
      $SearchedContent = 1;
      my %ContentDocumentIDs = ();
 
-     my $SearchEngine = qq("$FileContSearch");
-
-     $SearchString = "$ContentSearch $SearchEngine $FileContSearchMode";
-
-     open SEARCH," $SearchString |";
+     # List-form open: arguments go straight to the wrapper, no shell involved.
+     unless (open(SEARCH, "-|", $ContentSearch, $FileContSearch, $FileContSearchMode)) {
+        push @WarnStack,"The file content search engine could not be started.";
+     }
 
      while ($Line = <SEARCH>) {
         $TmpLine = $Line;

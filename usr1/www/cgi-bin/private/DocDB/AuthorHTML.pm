@@ -511,7 +511,15 @@ sub AuthorJSList (%) {
   my @AuthorIDs = sort byLastName keys %Authors;
   foreach my $ID (@AuthorIDs) {
     if ($Authors{$ID}{ACTIVE} || $All) {
-      $script .= "\"$Authors{$ID}{Formal}\", ";
+      # Names come from the database (any creator may add authors): escape
+      # them for a double-quoted JavaScript string literal.
+      my $Formal = $Authors{$ID}{Formal};
+      $Formal =~ s/\\/\\\\/g;
+      $Formal =~ s/"/\\"/g;
+      $Formal =~ s/[\r\n]+/ /g;
+      $Formal =~ s/</\\x3c/g;
+      $Formal =~ s/>/\\x3e/g;
+      $script .= "\"$Formal\", ";
     }
   }
   # strip trailing boogers

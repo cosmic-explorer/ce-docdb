@@ -143,7 +143,7 @@ sub InsertDocument (%) {
 
   if ($DocAlias) {
       $DocNextNumber = $DocAlias;
-      $DocNumberStr = sprintf($DocNextNumber);
+      $DocNumberStr = $DocNextNumber;
   }
   unless ($DateTime) {
 #    my ($Sec,$Min,$Hour,$Day,$Mon,$Year) = localtime(time);

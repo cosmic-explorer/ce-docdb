@@ -124,7 +124,7 @@ if ($Action ne "unsign" && $Action ne "sign") {
   
 # Standard warnings/errors on exit
 
-#EndPage();
+EndPage();
 
 # Sign or unsign Document
 
@@ -144,7 +144,10 @@ if ($Action eq "sign") {
 #
 # Disgusting, dirty hack! Should be done by making the signing block use AJAX.
 #
-my $magicscript = '<script>highlightNextSigner();window.location = "/'.&FetchDocumentAlias($params{docid}).'-v'.$params{version}.'";</script>';
+# Only numeric identifiers may be placed in the redirect script.
+my $RedirectDocID   = ($params{docid}   =~ /^\d+$/) ? $params{docid}   : $DocumentID;
+my $RedirectVersion = ($params{version} =~ /^\d+$/) ? $params{version} : 0;
+my $magicscript = '<script>highlightNextSigner();window.location = "/'.&FetchDocumentAlias($RedirectDocID).'-v'.$RedirectVersion.'";</script>';
 my $otherscript = '<script src=/DocDB/Static/js/prototype.js></script><script src=/DocDB/Static/js/scriptaculous/scriptaculous.js></script><script src=/DocDB/Static/js/Signatures.js></script>';
 print "Content-Type: text/html\n\n".$otherscript.$magicscript;
 
