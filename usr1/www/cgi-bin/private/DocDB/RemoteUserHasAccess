@@ -25,31 +25,50 @@ require "EmailSecurity.pm";
 require "FSUtilities.pm";
 require "Security.pm";
 
-@stdin = <STDIN>;
-my $RemoteUser = $stdin[0];
+# How the username arrives: mod_authnz_external 3.3.1 (the version in the
+# image) writes "username\ngroup\n" to stdin for DefineExternalGroup checks
+# regardless of the configured method keyword, and leaves USER unset. This
+# was verified against the real module in an isolated container (see
+# docs/assessment-codex-branch-2026-10-14.md). Accept USER if a future module
+# version provides it, otherwise read the first stdin line; fail closed on
+# an empty identity or URI.
+my @stdin = <STDIN>;
+my $RemoteUser = $ENV{USER};
+$RemoteUser = $stdin[0] unless defined $RemoteUser && length $RemoteUser;
+$RemoteUser = "" unless defined $RemoteUser;
 chomp($RemoteUser);
+$RemoteUser = lc $RemoteUser;
+my $RequestURI = $ENV{URI};
+exit(1) unless length $RemoteUser && defined $RequestURI && length $RequestURI;
 
-use constant request_uri => $ENV{URI};
 use constant authnz_remote_user => $RemoteUser;
 
-my $Filename = $web_root.&request_uri;
+my $Filename = $web_root.$RequestURI;
 
-$dbh   = DBI->connect('DBI:mysql:'.$db_name.':'.$db_host, $db_rwuser, $db_rwpass);
+# Fail closed if the database is unavailable rather than dying with output.
+$dbh = DBI->connect('DBI:mysql:'.$db_name.':'.$db_host, $db_rwuser, $db_rwpass, { PrintError => 0 });
+exit(1) unless $dbh;
 
 my $DocRevID = DocRevIDFromFullFile($Filename);
+exit(1) unless defined $DocRevID && $DocRevID =~ /\A[1-9][0-9]*\z/;
 
-my $EmailUser = FetchEmailUserIDFromRemoteUserName($RemoteUser);
+# Exact, bound lookup; refuse an ambiguous mapping if provisioning ever left
+# two RemoteUser rows with the same name.
+my $UserFetch = $dbh->prepare("select EmailUserID from RemoteUser where RemoteUserName = ? limit 2");
+exit(1) unless $UserFetch && $UserFetch->execute($RemoteUser);
+my @User = $UserFetch->fetchrow_array;
+exit(1) if $UserFetch->err;
+my @Duplicate = $UserFetch->fetchrow_array;
+exit(1) if $UserFetch->err || @Duplicate;
+my $EmailUser = $User[0];
+exit(1) unless defined $EmailUser && $EmailUser =~ /\A[1-9][0-9]*\z/;
 our $GLOBAL_EMAILUSER = $EmailUser;
 
 &GetSecurityGroups;
-#print "Content-Type: text/html\n\nFilename is: $Filename";
 
-my $CanAccessRev = CanAccessRevision($DocRevID, $EmailUser);
-
-if ($CanAccessRev) {
+if (CanAccessRevision($DocRevID, $EmailUser)) {
    exit(0);
-} 
-else {
+} else {
    exit(1);
 }
 
