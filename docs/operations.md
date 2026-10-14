@@ -86,6 +86,27 @@ Administrators can also edit these through the DocDB administration pages
 (`AdministerHome` in the private instance) if they are in a group with
 `CanAdminister`.
 
+## Fixing the `UsersGroup` duplication
+
+Cause and details: [rest-api.md](rest-api.md). The fix has three parts and
+the order matters; none of it needs DCC downtime.
+
+1. **API**: deploy `cosmicexplorer/rest-dcc:1.2.2` (branch
+   `fix-rest-api-pagination` in ce-it-infrastructure: lists are returned
+   whole). Build the image on the host from `rest-dcc/`, then
+   `docker service update --image cosmicexplorer/rest-dcc:1.2.2 dcc_rest-api`
+   and commit the tag change in `dcc.yml`.
+2. **Plugin**: deploy the RestDccProvisioner change (branch
+   `fix-restdcc-pagination` in the comanage-registry fork: follow pagination,
+   skip members without a `DccDocDbID`) on `roster.cosmicexplorer.org`.
+3. **Database**: run `scripts/dedupe-usersgroup.sql` as described in its
+   header. It keeps a copy of the table, deletes duplicates keeping one row
+   per membership, adds `UNIQUE KEY (EmailUserID, GroupID)` and prints the
+   before/after counts.
+4. **Verify**: in COmanage, reprovision the `CEConsortium` group and confirm
+   the row count in step 3 does not change and the API log shows no failed
+   inserts.
+
 ## Full-text search index (GLIMPSE)
 
 `etc/cron.daily/dcc-glimpse` rebuilds the index under `/usr2/GLIMPSE` nightly;
