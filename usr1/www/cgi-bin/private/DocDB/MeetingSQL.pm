@@ -646,7 +646,7 @@ sub DeleteEvent (%) {
     DeleteSession($SessionID);
   }   
   foreach my $SeparatorID (@SeparatorIDs) {
-    DeleteSessionSeparator($EventID);
+    DeleteSessionSeparator($SeparatorID);
   }   
   
   my $Delete = $dbh -> prepare("delete from Conference where ConferenceID=?");
