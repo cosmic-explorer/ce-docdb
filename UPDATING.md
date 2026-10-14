@@ -90,7 +90,8 @@ The script:
 
 * refuses if `scripts/check-drift.sh` finds hand edits in the running
   container (override with `FORCE=1` only if you have deliberately decided to
-  discard them);
+  discard them), and refuses outright, even with `FORCE=1`, if the container
+  is not running or Docker could not inspect it (exit 2 or 3);
 * runs `docker service update --image <tag> dcc_dcc`, which rewrites the
   service spec and recreates the container (stop-first, so expect a few
   minutes of downtime while shibd validates InCommon metadata);
@@ -189,9 +190,11 @@ scripts/check-drift.sh
 ```
 
 Lists files under the managed paths that differ between the running
-container and its image. An empty result means the container is running
-exactly the image, which is the only state in which a reboot is guaranteed
-to be a no-op.
+container and its image, excluding documented runtime files (`SiteConfig.pm`
+password substitution, SP certificates, bind mounts, the `__Static` staging
+directories). Exit 0 means no other changes were found and a reboot would be a
+no-op; 1 means hand edits exist; 2 means no container is running; 3 means the
+inspection itself failed and nothing can be concluded.
 
 ## If the base image is ever lost
 

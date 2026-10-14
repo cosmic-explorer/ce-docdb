@@ -20,16 +20,17 @@ administrator must both be in a group with `CanAdminister` and know a MySQL
 account password that has write access to `dcc_docdb`. The *form* pages
 (`AdministerHome`, `AdministerForm`, `KeywordAdministerForm`,
 `GroupAdministerForm`, `EmailAdministerForm`) connect read-only and refuse
-to render for non-admins. All SQL in these scripts uses placeholders, and
-because the password travels in the POST, cross-site request forgery
-against them is impractical. Small `*AdminDisable.js` scripts enable and
+to render for non-admins. All SQL in these scripts uses placeholders. Because the
+database password travels in the POST, a blind cross-site request forgery
+against them is impractical, though that is a side effect rather than a
+designed defence (see the security review, M9). Small `*AdminDisable.js` scripts enable and
 disable form fields depending on the New/Modify/Delete radio button.
 
 ## What can be administered
 
 | Area | Script | Notes |
 |------|--------|-------|
-| Authors | `AuthorAdminister` | name, institution; delete cascades `RevisionAuthor` |
+| Authors | `AuthorAdminister` | name, institution; delete removes `RevisionAuthor` but leaves submitter, requester, author-group, moderator, hint and account references behind |
 | Institutions | `InstitutionAdminister` | delete refused while authors remain |
 | Document types | `DocTypeAdminister` | `ShortType`/`LongType`; `NextDocNumber` handled in `MiscSQL.pm` |
 | Journals | `JournalAdminister` | |
@@ -75,7 +76,9 @@ read-only scripts and modules only (no admin, certificate or migration
 scripts), plus its own `SiteConfig.pm` (`$Public = 1`, empty read-write
 credentials, public `$cgi_root`), `ProjectGlobals.pm` (no P&P review or
 review states, `HomeMaxDocs` 50), `CGIInclude.pm` (searches the public
-directory first) and a slightly different `DocumentDatabase` home page.
+directory first), a slightly different `DocumentDatabase` home page, its
+own `.htaccess`, an empty `serverstatus.html`, and a separate copy of
+`Utilities.pm` that must be kept in step with the private one.
 `Params/Validate*.pm` is a vendored Params::Validate 0.89 that nothing uses.
 
 ## Client-side JavaScript
