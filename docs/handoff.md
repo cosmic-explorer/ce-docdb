@@ -70,6 +70,11 @@ local-only image works but prints a registry warning; that is expected.
   COmanage maintainer; follow-up PR pending on their side).
 - Drop `UsersGroup_before_dedupe` in the DCC database after a week of clean
   provisioning.
+- ce-it-infrastructure's two old PRs from Alex Nitz were resolved 2026-10-14:
+  #3 (`apachectl` in the mail cert-renewal cron) merged; #5 (sed on the
+  public `Search` at container start) closed because the fix belongs here as
+  review finding L25 (public search still redirects to Google with
+  `site:dcc.ligo.org`; use the configured host and URL-encode the query).
 
 - Revoke the Sentry project key that was in `cgi-bin/test.pl`; it is in git
   history from the initial commit (`ee5fb2b`) even though the file is now
