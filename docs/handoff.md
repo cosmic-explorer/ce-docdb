@@ -22,6 +22,7 @@ unless stated.
 | ce-docdb | `backport-opendcc` (on hotfix) | [#2](https://github.com/cosmic-explorer/ce-docdb/pull/2) | `InputValidation.pm`, escaped message stacks (H8), `prefilter.tcl` fixes | `cosmicexplorer/dcc:ce-0ff3193cf099` |
 | ce-it-infrastructure | `dcc-login-eppns` | none yet | folds the live `/login` ePPN allow-list into the Dockerfile | |
 | ce-it-infrastructure | `fix-rest-api-pagination` | [#6](https://github.com/cosmic-explorer/ce-it-infrastructure/pull/6) | API returns whole lists; `rest-dcc` 1.2.2 | image must be built on the host |
+| ce-docdb | `codex/ce-docdb-unified-review-2026-10-14` (Geoffrey Lovelace, GPT Codex) | none | re-implementation of Release 1 with per-finding tests, 9 extra fixes, 1.2 MB review archive; see `docs/assessment-codex-branch-2026-10-14.md`. **Do not merge wholesale: its `RemoteUserHasAccess` rewrite would deny all private downloads.** | |
 | comanage-registry | `fix-restdcc-pagination` | [#1](https://github.com/cosmic-explorer/comanage-registry/pull/1) | provisioner follows pagination; per-member id fix | n/a (PHP, not linted: no PHP on this host) |
 
 The docs commits are cherry-picked onto both ce-docdb branches so they stay
@@ -40,6 +41,10 @@ docs-identical to `main`; merging in order (`#1`, then `#2`) is clean.
 5. Open a PR for `dcc-login-eppns` (or fold it into `#6`).
 
 ## Open items for the user
+
+- Decide on the Codex branch: cherry-pick the commits listed in the
+  assessment onto a `release-2` branch, have S1 rewritten to read stdin, and
+  drop the `review/` archive.
 
 - Revoke the Sentry project key that was in `cgi-bin/test.pl`; it is in git
   history from the initial commit (`ee5fb2b`) even though the file is now
