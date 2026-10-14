@@ -6,12 +6,25 @@ unless stated.
 
 ## Production state
 
-- `dcc_dcc` runs `cosmicexplorer/dcc:3.3.0`, the 2019 image, with three
-  hand edits in the container layer (`dcc-dev.conf` login allow-list,
-  `ListBy` XSS hot-fix, `inc-md-cert-mdq.pem`). All three are captured in
-  this repository; `scripts/check-drift.sh` lists them until the first deploy.
-- **None of the fixes below have been deployed.** Deploys cause a few minutes
-  of downtime and must be scheduled by the user.
+**Deployed 2026-10-14 (afternoon, US Eastern):** `dcc_dcc` now runs
+`cosmicexplorer/dcc:ce-cef36b92168d`, which is `main` at the merge of PRs #1,
+#2 and #3 (Releases 1 and 2 plus the independent-review fixes). Verified after
+the deploy: service spec references the tag, `check-drift.sh` reports no
+drift, supervisord shows cron/shibd/apache2 running, the five retired CGIs are
+absent, the fixed files in the container match the repository, no `/tmp`
+debug files are being created, the public home page answers 200. The private
+entry point returns 500 for several minutes after any restart while shibd
+verifies the InCommon IdP aggregate; that is expected and clears on its own.
+The tag is pinned in ce-it-infrastructure `dcc.yml` by PR #7.
+
+Previous state, for the record:
+
+- Until 2026-10-14 `dcc_dcc` ran `cosmicexplorer/dcc:3.3.0`, the 2019 image,
+  with three hand edits in the container layer (`dcc-dev.conf` login
+  allow-list, `ListBy` XSS hot-fix, `inc-md-cert-mdq.pem`), all captured in
+  this repository.
+- Deploys cause a few minutes of downtime plus the shibd metadata window and
+  must be scheduled by the user.
 
 ## Branches and pull requests
 
@@ -26,12 +39,15 @@ unless stated.
 | ce-docdb | `codex/ce-docdb-unified-review-2026-10-14` (Geoffrey Lovelace, GPT Codex; to be deleted) | none | re-implementation of Release 1 with per-finding tests, 9 extra fixes, 1.2 MB review archive; see `docs/assessment-codex-branch-2026-10-14.md`. **Do not merge wholesale: its `RemoteUserHasAccess` rewrite would deny all private downloads.** | |
 | comanage-registry | `fix-restdcc-pagination` | [#1](https://github.com/cosmic-explorer/comanage-registry/pull/1) | provisioner follows pagination; per-member id fix | n/a (PHP, not linted: no PHP on this host) |
 
-The docs commits are cherry-picked onto both ce-docdb branches so they stay
-docs-identical to `main`; merging in order (`#1`, then `#2`) is clean.
+Lesson from merging the stack: GitHub merges each PR into its *base*
+branch, so after the first PR of a stack merges, retarget the next one to
+`main` before clicking merge (or merge the final branch into `main` by hand,
+which is what was done on 2026-10-14). Also, `docker service update` to a
+local-only image works but prints a registry warning; that is expected.
 
 ## Recommended order of operations
 
-1. Merge and deploy `#1`, then `#2`, then `#3` (or merge all and deploy the `#3` image):
+1. ~~Merge and deploy `#1`, `#2`, `#3`~~ Done 2026-10-14. For future releases:
    `scripts/deploy-image.sh <tag>` from the merged branch, then set the tag in
    `ce-it-infrastructure/dcc/dcc.yml` (`UPDATING.md`).
 2. Merge ce-it-infrastructure `#6`, build `rest-dcc:1.2.2` on the host,
