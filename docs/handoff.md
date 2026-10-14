@@ -13,8 +13,10 @@ the deploy: service spec references the tag, `check-drift.sh` reports no
 drift, supervisord shows cron/shibd/apache2 running, the five retired CGIs are
 absent, the fixed files in the container match the repository, no `/tmp`
 debug files are being created, the public home page answers 200. The private
-entry point returns 500 for several minutes after any restart while shibd
-verifies the InCommon IdP aggregate; that is expected and clears on its own.
+entry point returns 500 after any restart while shibd verifies the InCommon
+IdP aggregate at 100% CPU; on 2026-10-14 that took 30 minutes (14:58 to
+15:28 local) before the login redirect returned. Expected; it clears on its
+own, and the public instance works throughout.
 The tag is pinned in ce-it-infrastructure `dcc.yml` by PR #7.
 
 Previous state, for the record:
