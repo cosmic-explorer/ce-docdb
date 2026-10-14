@@ -57,14 +57,19 @@ local-only image works but prints a registry warning; that is expected.
    `ce-it-infrastructure/dcc/dcc.yml` (`UPDATING.md`).
 2. ~~Merge ce-it-infrastructure `#6`, build and roll `rest-dcc:1.2.2`~~ Done 2026-10-14.
 3. ~~Deploy comanage-registry `#1`~~ Done 2026-10-14 22:45 UTC (merged master `990759f5` on the roster host).
-4. ~~Run `scripts/dedupe-usersgroup.sql`~~ Done 2026-10-14 22:50 UTC: 35,971 rows reduced to 962 (one per membership), `UNIQUE KEY EmailUserGroup (EmailUserID, GroupID)` added, duplicate inserts verified rejected, backup kept as `UsersGroup_before_dedupe` (drop it once the next few syncs are clean). Remaining: reprovision `CEConsortium` (CO Group 16, DCC target 2 only) and confirm the row count stays at 739 for that group.
+4. ~~Run `scripts/dedupe-usersgroup.sql`~~ Done 2026-10-14 22:50 UTC: 35,971 rows reduced to 962 (one per membership), `UNIQUE KEY EmailUserGroup (EmailUserID, GroupID)` added, duplicate inserts verified rejected, backup kept as `UsersGroup_before_dedupe` (drop it once the next few syncs are clean). The CEConsortium reprovision (CO Group 16, DCC target 2) at 22:53 UTC made 0 inserts and 2 deletes (two people no longer in the COmanage group, one of them already an inactive author); `UsersGroup` is at 960 rows = 960 memberships, CEConsortium 737. The duplication bug is closed end to end. Drop `UsersGroup_before_dedupe` after a week of clean syncs.
 5. Open a PR for `dcc-login-eppns` (or fold it into `#6`).
 
 ## Open items for the user
 
-- The Codex branch's useful content is now in `release-2` (PR #3) and in the
+- The Codex branch's useful content is now in `release-2` (merged) and in the
   review's appendix; the branch can be deleted. A local backup of it is on
   this host as branch `geoffrey-review` (not pushed).
+- The COmanage plugin still attributes membership-removal history records to
+  the last member iterated rather than the removed person (noted by the
+  COmanage maintainer; follow-up PR pending on their side).
+- Drop `UsersGroup_before_dedupe` in the DCC database after a week of clean
+  provisioning.
 
 - Revoke the Sentry project key that was in `cgi-bin/test.pl`; it is in git
   history from the initial commit (`ee5fb2b`) even though the file is now
