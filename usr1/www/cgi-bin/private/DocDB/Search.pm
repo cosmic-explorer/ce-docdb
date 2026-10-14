@@ -60,7 +60,7 @@ sub LocalSearch ($) {
   my $OutFormat = $params{outformat} || "HTML";
 
   # The logic operators are spliced into SQL, so normalise them to the only
-  # two accepted values instead of trusting the request.
+  # two accepted values instead of trusting the request (H15).
   $InnerLogic  = (defined $params{innerlogic} && uc($params{innerlogic}) eq "OR") ? "OR" : "AND";
   $OuterLogic  = (defined $params{outerlogic} && uc($params{outerlogic}) eq "OR") ? "OR" : "AND";
 
@@ -84,7 +84,7 @@ sub LocalSearch ($) {
   $FileContSearchMode     = $params{filecontsearchmode};
   # Only the four modes the glimpse wrapper understands are allowed; the value
   # is passed to an external program, so anything else is rejected outright.
-  unless (defined $FileContSearchMode && $FileContSearchMode =~ /^(allword|anyword|allsub|anysub)$/) {
+  unless (defined $FileContSearchMode && $FileContSearchMode =~ /\A(allword|anyword|allsub|anysub)\z/) {
     $FileContSearchMode = "anysub";
   }
 
@@ -121,14 +121,9 @@ sub LocalSearch ($) {
   ###
   ### Work in progress.
   ###
-  $SimpleText         =~ s/[\\\'\"%_;]/\\$&/g;
   $NumberSearch       =~ s/[^\s\w+-\.]//go;
-  $TitleSearch        =~ s/[\\\'\"%_;]/\\$&/g;
-  $AbstractSearch     =~ s/[\\\'\"%_;]/\\$&/g;
-  $KeywordSearch      =~ s/[\\\'\"%_;]/\\$&/g;
   $RevisionNoteSearch =~ s/[^\s\w+-\.]//go;
   $PubInfoSearch      =~ s/[^\s\w+-\.]//go;
-  $FileSearch         =~ s/[\\\'\"%_;]/\\$&/g;
   $FileDescSearch     =~ s/[^\s\w+-\.]//go;
   $FileContSearch     =~ s/[^\s\w+-\.]//go;
 
@@ -236,9 +231,9 @@ sub LocalSearch ($) {
   $Aftermonth = $params{aftermonth};
   $Afteryear  = $params{afteryear};
   # Date parts are placed in SQL literals: accept only digits (or the
-  # form's placeholders), otherwise ignore the date restriction.
-  unless (!defined $Afterday  || $Afterday  eq "--"   || $Afterday  =~ /^\d{1,2}$/) { $Afterday  = "--";   }
-  unless (!defined $Afteryear || $Afteryear eq "----" || $Afteryear =~ /^\d{4}$/)   { $Afteryear = "----"; }
+  # form's placeholders), otherwise ignore the date restriction (H14).
+  unless (!defined $Afterday  || $Afterday  eq "--"   || $Afterday  =~ /\A[0-9]{1,2}\z/) { $Afterday  = "--";   }
+  unless (!defined $Afteryear || $Afteryear eq "----" || $Afteryear =~ /\A[0-9]{4}\z/)   { $Afteryear = "----"; }
   unless (!defined $Aftermonth || exists $ReverseAbrvMonth{$Aftermonth})            { $Aftermonth = "---"; }
   if ($Afteryear && $Afteryear ne "----") {
      if ($Aftermonth eq "---") {$Aftermonth = "Jan";}
@@ -249,8 +244,8 @@ sub LocalSearch ($) {
   $Beforeday   = $params{beforeday};
   $Beforemonth = $params{beforemonth};
   $Beforeyear  = $params{beforeyear};
-  unless (!defined $Beforeday  || $Beforeday  eq "--"   || $Beforeday  =~ /^\d{1,2}$/) { $Beforeday  = "--";   }
-  unless (!defined $Beforeyear || $Beforeyear eq "----" || $Beforeyear =~ /^\d{4}$/)   { $Beforeyear = "----"; }
+  unless (!defined $Beforeday  || $Beforeday  eq "--"   || $Beforeday  =~ /\A[0-9]{1,2}\z/) { $Beforeday  = "--";   }
+  unless (!defined $Beforeyear || $Beforeyear eq "----" || $Beforeyear =~ /\A[0-9]{4}\z/)   { $Beforeyear = "----"; }
   unless (!defined $Beforemonth || exists $ReverseAbrvMonth{$Beforemonth})            { $Beforemonth = "---"; }
   if ($Beforeyear && $Beforeyear ne "----") {
      if ($Beforemonth eq "---") {$Beforemonth = "Dec";}
@@ -293,13 +288,14 @@ sub LocalSearch ($) {
   
   if ($NumberSearch) {
      $SearchedNumbers = 1;
-     my $NumberPhrase  = TextSearch("Alias", $NumberSearchMode, $NumberSearch);
+     my @NumberValues;
+     my $NumberPhrase  = TextSearch("Alias", $NumberSearchMode, $NumberSearch, \@NumberValues);
      my $DocumentQuery = "select DocumentID from Document where ";
      $DocumentQuery .= join $OuterLogic,$NumberPhrase;
 
      my %NumberDocumentIDs = ();
      my $document_list = $dbh -> prepare($DocumentQuery);
-     $document_list -> execute();
+     $document_list -> execute(@NumberValues);
      $document_list -> bind_columns(undef, \($DocumentID));
 
      while ($document_list -> fetch) {
@@ -311,12 +307,13 @@ sub LocalSearch ($) {
   if ($TitleSearch || $AbstractSearch || $KeywordSearch || $RevisionNoteSearch ||
       $PubInfoSearch || @RequesterSearchIDs || $SQLBegin    || $SQLEnd) {
      $SearchedRevisions = 1;
+     my @RevisionValues;
      ### Text search matches
-     my $TitlePhrase       = TextSearch("DocumentTitle",  $TitleSearchMode,        $TitleSearch);
-    my $AbstractPhrase     = TextSearch("Abstract",       $AbstractSearchMode,     $AbstractSearch);
-    my $KeywordPhrase      = TextSearch("Keywords",       $KeywordSearchMode,      $KeywordSearch);
-    my $RevisionNotePhrase = TextSearch("Note",           $RevisionNoteSearchMode, $RevisionNoteSearch);
-    my $PubInfoPhrase      = TextSearch("PublicationInfo",$PubInfoSearchMode,      $PubInfoSearch);
+     my $TitlePhrase       = TextSearch("DocumentTitle",  $TitleSearchMode,        $TitleSearch, \@RevisionValues);
+    my $AbstractPhrase     = TextSearch("Abstract",       $AbstractSearchMode,     $AbstractSearch, \@RevisionValues);
+    my $KeywordPhrase      = TextSearch("Keywords",       $KeywordSearchMode,      $KeywordSearch, \@RevisionValues);
+    my $RevisionNotePhrase = TextSearch("Note",           $RevisionNoteSearchMode, $RevisionNoteSearch, \@RevisionValues);
+    my $PubInfoPhrase      = TextSearch("PublicationInfo",$PubInfoSearchMode,      $PubInfoSearch, \@RevisionValues);
 
   ### Other matches
 
@@ -360,7 +357,7 @@ sub LocalSearch ($) {
     my %RevisionDocumentIDs = ();
 
     my $document_list = $dbh -> prepare($RevisionQuery);
-       $document_list -> execute();
+       $document_list -> execute(@RevisionValues);
        $document_list -> bind_columns(undef, \($DocumentID, $DocRevID));
 
     ### List of documents found at this stage
@@ -438,9 +435,10 @@ sub LocalSearch ($) {
 
   if ($FileSearch || $FileDescSearch) {
     $SearchedFiles = 1;
+  my @FileValues;
   ### Text search matches
-    my $FilePhrase        = TextSearch("FileName",    $FileSearchMode,    $FileSearch);
-    my $DescriptionPhrase = TextSearch("Description", $FileDescSearchMode,$FileDescSearch);
+    my $FilePhrase        = TextSearch("FileName",    $FileSearchMode,    $FileSearch, \@FileValues);
+    my $DescriptionPhrase = TextSearch("Description", $FileDescSearchMode,$FileDescSearch, \@FileValues);
 
   ### Get Revisions from DocumentFile that match
 
@@ -456,7 +454,7 @@ sub LocalSearch ($) {
     my @FileRevisions = ();
     my $DocRevID;
     my $revision_list = $dbh -> prepare($FileQuery);
-       $revision_list -> execute();
+       $revision_list -> execute(@FileValues);
        $revision_list -> bind_columns(undef, \($DocRevID));
 
   ### List of revisions found at this stage

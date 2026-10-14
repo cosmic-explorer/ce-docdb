@@ -42,7 +42,7 @@
               );
 
 sub TextSearch {
-  my ($Field,$SearchMode,$Words) = @_;
+  my ($Field,$SearchMode,$Words,$BindValues) = @_;
 
   my $Phrase = "";
   my $Join;
@@ -54,10 +54,15 @@ sub TextSearch {
     foreach my $Word (@Words) {
       if ($SearchMode eq "anysub" || $SearchMode eq "allsub") {
         $Word =~ tr/[A-Z]/[a-z]/;
-        push @Atoms,"LOWER($Field) like \"%$Word%\"";
+        # Escape LIKE metacharacters in the value, then bind it. SQL quoting
+        # is the driver's responsibility, including NO_BACKSLASH_ESCAPES mode.
+        $Word =~ s/([\\%_])/\\$1/g;
+        push @Atoms,"LOWER($Field) like ?";
+        push @$BindValues, "%$Word%";
       } elsif ($SearchMode eq "anyword" || $SearchMode eq "allword") {
         $Word =~ tr/[A-Z]/[a-z]/;
-        push @Atoms,"LOWER($Field) REGEXP \"\[\[:<:\]\]$Word\[\[:>:\]\]\"";
+        push @Atoms,"LOWER($Field) REGEXP ?";
+        push @$BindValues, '[[:<:]]'.$Word.'[[:>:]]';
       }
     }
   }

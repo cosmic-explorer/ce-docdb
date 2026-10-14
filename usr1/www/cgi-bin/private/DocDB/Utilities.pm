@@ -98,7 +98,8 @@ sub send_email {
     use Email::Simple::Creator ();
     use Try::Tiny;
     my ($sender, $rcpts, $subject, $msg) = @_;
-    # Header values must be single-line.
+    # Header values must be single-line, including a configured sender name.
+    $sender  =~ s/[\r\n]+/ /g;
     $subject =~ s/[\r\n]+/ /g;
     $rcpts   =~ s/[\r\n]+/ /g;
     my $message = Email::Simple->create(

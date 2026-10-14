@@ -514,6 +514,7 @@ sub ProcessManualAuthors {
 
 ### Split the first name into first and middle initials
     my($first, $middle) = split(/ /, $first, 2);
+    $middle = '' unless defined $middle; # absent middle name matches empty DB text
     $middle =~ s/\.//g;    # Remove dots if any  
  
     my $author_list = $dbh -> prepare("select AuthorId from Author where FirstName = ? and MiddleInitials = ? and LastName = ?");
@@ -615,6 +616,7 @@ sub GetAuthorFromNames {
  
 ### Split the first name into first and middle initials
     my($first, $middle) = split(/ /, $first, 2);
+    $middle = '' unless defined $middle; # absent middle name matches empty DB text
     $middle =~ s/\.//g;    # Remove dots if any  
 
     my $author_list = $dbh -> prepare("select AuthorId from Author where FirstName = ? and MiddleInitials = ? and LastName = ?");
@@ -719,9 +721,10 @@ sub MatchAuthor ($) {
   my @MatchIDs = ();
   if ($Either) {
     $Either =~ tr/[A-Z]/[a-z]/;
+    $Either =~ s/([\\%_])/\\$1/g;
     my $List = $dbh -> prepare(
-       "select AuthorID from Author where LOWER(FirstName) like \"%$Either%\" or LOWER(LastName) like \"%$Either%\""); 
-    $List -> execute();
+       "select AuthorID from Author where LOWER(FirstName) like ? or LOWER(LastName) like ?");
+    $List -> execute("%$Either%","%$Either%");
     $List -> bind_columns(undef, \($AuthorID));
     while ($List -> fetch) {
       push @MatchIDs,$AuthorID;
@@ -743,9 +746,10 @@ sub MatchAuthor_NoGroups ($) {
   my @MatchIDs = ();
   if ($Either) {
     $Either =~ tr/[A-Z]/[a-z]/;
+    $Either =~ s/([\\%_])/\\$1/g;
     my $List = $dbh -> prepare(
-       "select AuthorID from Author where LOWER(FirstName) like \"%$Either%\" or LOWER(LastName) like \"%$Either%\""); 
-    $List -> execute();
+       "select AuthorID from Author where LOWER(FirstName) like ? or LOWER(LastName) like ?");
+    $List -> execute("%$Either%","%$Either%");
     $List -> bind_columns(undef, \($AuthorID));
     while ($List -> fetch) {
       push @MatchIDs,$AuthorID;

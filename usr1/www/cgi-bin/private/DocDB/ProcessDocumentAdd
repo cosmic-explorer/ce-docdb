@@ -505,7 +505,7 @@ if ($Mode eq "use") {
 
    # The alias becomes a directory name and appears in URLs and commands:
    # accept only the documented form, one letter followed by 6-8 digits.
-   unless ($Alias =~ m/^[A-Z]\d{6,8}$/) {
+   unless ($Alias =~ m/\A[A-Z][0-9]{6,8}\z/) {
         push @ErrorStack, "A valid document number is one letter followed by six to eight digits.";
         EndPage();
    }
