@@ -56,9 +56,8 @@ local-only image works but prints a registry warning; that is expected.
    `scripts/deploy-image.sh <tag>` from the merged branch, then set the tag in
    `ce-it-infrastructure/dcc/dcc.yml` (`UPDATING.md`).
 2. ~~Merge ce-it-infrastructure `#6`, build and roll `rest-dcc:1.2.2`~~ Done 2026-10-14.
-3. Deploy comanage-registry `#1` on `roster.cosmicexplorer.org`.
-4. Run `scripts/dedupe-usersgroup.sql` (`docs/operations.md`), then
-   reprovision `CEConsortium` and confirm the row count holds.
+3. ~~Deploy comanage-registry `#1`~~ Done 2026-10-14 22:45 UTC (merged master `990759f5` on the roster host).
+4. ~~Run `scripts/dedupe-usersgroup.sql`~~ Done 2026-10-14 22:50 UTC: 35,971 rows reduced to 962 (one per membership), `UNIQUE KEY EmailUserGroup (EmailUserID, GroupID)` added, duplicate inserts verified rejected, backup kept as `UsersGroup_before_dedupe` (drop it once the next few syncs are clean). Remaining: reprovision `CEConsortium` (CO Group 16, DCC target 2 only) and confirm the row count stays at 739 for that group.
 5. Open a PR for `dcc-login-eppns` (or fold it into `#6`).
 
 ## Open items for the user
