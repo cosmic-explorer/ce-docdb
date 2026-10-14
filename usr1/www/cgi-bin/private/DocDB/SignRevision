@@ -145,8 +145,8 @@ if ($Action eq "sign") {
 # Disgusting, dirty hack! Should be done by making the signing block use AJAX.
 #
 # Only numeric identifiers may be placed in the redirect script.
-my $RedirectDocID   = ($params{docid}   =~ /^\d+$/) ? $params{docid}   : $DocumentID;
-my $RedirectVersion = ($params{version} =~ /^\d+$/) ? $params{version} : 0;
+my $RedirectDocID   = ($params{docid}   =~ /\A[0-9]+\z/) ? $params{docid}   : $DocumentID;
+my $RedirectVersion = ($params{version} =~ /\A[0-9]+\z/) ? $params{version} : 0;
 my $magicscript = '<script>highlightNextSigner();window.location = "/'.&FetchDocumentAlias($RedirectDocID).'-v'.$RedirectVersion.'";</script>';
 my $otherscript = '<script src=/DocDB/Static/js/prototype.js></script><script src=/DocDB/Static/js/scriptaculous/scriptaculous.js></script><script src=/DocDB/Static/js/Signatures.js></script>';
 print "Content-Type: text/html\n\n".$otherscript.$magicscript;
