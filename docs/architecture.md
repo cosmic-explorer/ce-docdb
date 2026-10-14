@@ -7,7 +7,8 @@ framework) in front of a MariaDB database, with documents stored as plain
 files on disk and Apache doing authentication through Shibboleth. This page
 describes how the pieces fit together on `dcc.cosmicexplorer.org`.
 
-Related pages: [code layout](code-layout.md), [authentication and
+Related pages: [bootstrap](bootstrap.md) for how this was built from the LIGO
+disk image, [code layout](code-layout.md), [authentication and
 authorization](authentication-and-authorization.md), [database](database.md),
 [documents and files](documents-and-files.md), [search and
 listing](search-and-listing.md), [meetings, sign-offs and

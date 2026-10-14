@@ -4,6 +4,7 @@ Start with [architecture.md](architecture.md) for the big picture.
 
 | Page | What it covers |
 |------|----------------|
+| [bootstrap.md](bootstrap.md) | How the LIGO disk image was turned into the images, host directories and Swarm stack (what the ce-it-infrastructure steps do and why), and where this repository takes over |
 | [architecture.md](architecture.md) | Deployment (swarm services, image vs host), the two instances, request flow, URL map, file storage, external integrations |
 | [code-layout.md](code-layout.md) | Directory layout, file naming, configuration precedence, anatomy of a CGI script, conventions, Cosmic Explorer customisations and LIGO leftovers |
 | [authentication-and-authorization.md](authentication-and-authorization.md) | Shibboleth, RemoteUser/EmailUser/UsersGroup mapping, security groups and hierarchy, CanAccess/CanModify/CanAdminister, file download authorization, making documents public |
