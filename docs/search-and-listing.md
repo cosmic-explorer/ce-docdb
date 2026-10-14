@@ -23,17 +23,25 @@ access in all listings.
 `ListBy` is the general "documents by X" page. It takes exactly one of
 `days` (optionally `uncertified`, `latest`, `x0filter`), `topicid`,
 `authorid`, `typeid`, `eventid`, `eventgroupid`, `keyword`, `groupid` or
-`group`, `allpubs`, `alldocs`, and builds one SELECT for `DocumentID`s with
-placeholders for the values; two code paths assemble the query string from
-fixed fragments before `prepare`. Results are then rendered by the document
-table with access filtering. `maxdocs`, `sortby` and `reverse` control the
-table. In production the top of `ListBy` HTML-encodes every incoming
-parameter (a hot-fix applied in the container and now in this repository).
+`group`, `allpubs`, `alldocs`. Each list type has its own branch with its
+own SELECT (placeholders for the values; two branches assemble the string
+from fixed fragments first). Only the topic branch filters with
+`CanAccessRevision` while fetching; the days, event, event-group, type,
+group and all-documents branches collect every matching `DocumentID` (capped
+at `$LOOP_LIMIT`, 2000) and rely on the document table's per-row
+`LastAccess` check. In the public instance the generic fetch loop is skipped,
+so only the days, topic, author and author-group listings return documents
+there. `maxdocs`, `sortby` and `reverse` control the table. In production the
+top of `ListBy` HTML-encodes every incoming parameter (a hot-fix applied in
+the container and now in this repository). Note that the "First N of M"
+total is computed before access filtering (review L22).
 
 ## Search
 
 `SearchForm` renders the advanced form; `Search` (and the simple search box)
-submits to `Search.pm::SearchDocuments`. The search is a set of independent
+submits to `Search.pm::LocalSearch`. **In the public instance `Search` does
+not search locally at all: it redirects to a Google query** (still with a
+`site:dcc.ligo.org` filter, review L25). The search is a set of independent
 "atoms", each producing a list of revision or document IDs, combined with
 `innerlogic` (within a field) and `outerlogic` (between fields):
 
@@ -54,9 +62,13 @@ submits to `Search.pm::SearchDocuments`. The search is a set of independent
 
 The simple search (`simple=1`, `simpletext`) runs the same atoms over
 number, title, abstract, keywords, authors, topics and file names and ranks
-documents by `%SearchWeights`. Results pass through `ValidateRevisions`
-(drops obsolete revisions) and the access-filtered document table.
-`XSearch` is an XML variant used by external tools.
+documents by `%SearchWeights`. Access filtering happens at different points:
+text atoms over `DocumentRevision` are filtered with `CanAccessRevision` as
+they are fetched, topic/event/author/file atoms through `ValidateRevisions`,
+and the alias (document number) and document-type atoms only when the
+document table or XML output applies `LastAccess`. `XSearch` is the
+cross-DocDB variant: it calls `LocalSearch` in XML mode for the local
+results and fetches other DocDBs' public `Search?outformat=XML`.
 
 ## Other list pages
 
@@ -64,7 +76,10 @@ documents by `%SearchWeights`. Results pass through `ValidateRevisions`
 `ListKeywords`, `ListGroups`, `ListGroupUsers`, `ListEmailUsers`,
 `ListManagedDocuments` (documents with sign-offs), `ListAllMeetings`,
 `ListEventsBy`, `Statistics` (counts). `CustomListForm` lets a user choose
-the columns of the document table; the choice is stored in cookies.
+the columns of the document table. Field layouts are resolved by
+`PrepareFieldList` with the precedence explicit fields in the request, then
+the per-user cookies set by `CustomListForm`, then `ConfigSetting` rows set
+by administrators, then `%DefaultFieldLists`.
 
 ## Classification model
 
