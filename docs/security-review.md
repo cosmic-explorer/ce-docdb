@@ -628,6 +628,13 @@ Fix: encode at output, as `TopicLink` already does.
   and e-mail to any logged-in user. Confirm these are intended.
 * **L29** `SetPrefs` stores `numfile` and `overdate` from the request in
   cookies without bounds; `Cookies.pm` reads them back unchecked.
+* **L30** Three scripts cannot compile in the production image because the
+  Perl module `CGI::Untaint` is not installed: `ListEventsBy` (events by topic
+  or moderator), `TopicAdminister` (topic administration) and
+  `BulkCertificateInsert`. They return a server error whenever invoked and
+  have done so since the image was built; the `ListEventsBy` links on event
+  pages are therefore dead. Fix: install `perl-CGI-Untaint` in the image (or
+  replace the three `CGI::Untaint` uses with explicit integer checks).
 * **L20** LIGO leftovers in text: `SignoffHTML.pm:981,1133` mailto subjects
   say `LIGO-`; `$GroupSuffix = "@ligo.org"`; `CertificateInstructions.pm` is
   Fermilab text; `AuthName` strings; `pnp-dev.ligo.org`.
@@ -696,7 +703,9 @@ M4, M10, M11, M12, M13, L11, L17 (file deleted), and `AcceptPathInfo Off`
 plus an explicit `Require shib-session` on the private CGI location (H5,
 partial). Every
 modified Perl file passes `perl -c` under the production image's Perl and the
-Apache configuration passes `httpd -t`. The branch has **not** been deployed;
+Apache configuration passes `httpd -t`; a compile check of every script in
+the image found only the three pre-existing `CGI::Untaint` failures (L30).
+The built image for the branch head is `cosmicexplorer/dcc:ce-ff378a22bb8e`. The branch has **not** been deployed;
 see [UPDATING.md](../UPDATING.md) for the procedure, and test the Apache
 change on a staging container first if possible. Behavioural notes for the
 deployer:
