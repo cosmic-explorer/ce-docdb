@@ -383,15 +383,20 @@ Fix: delete these lines; use `syslog_err` behind a debug flag.
 ### M5. `UsersGroup` is massively duplicated [CONFIRMED, data]
 
 35,971 rows for 962 distinct (user, group) pairs; one membership repeated
-430 times; no unique key. The external provisioner re-inserts memberships on
-every synchronisation. `FetchUserGroupIDs` returns thousands of IDs for
+430 times; no unique key. Root cause (confirmed from the plugin source and
+the deployed API library): the API lists 100 rows per page and the COmanage
+provisioner only reads the first page, so every `CEConsortium` member beyond
+the first 100 is re-inserted on each group sync; see
+[rest-api.md](rest-api.md). Every group with fewer than 100 members has
+exactly one row per member. `FetchUserGroupIDs` returns thousands of IDs for
 active users and `CanAccess`/`CanModify` loop over them against the hierarchy
 on every page and every file download. The table (MyISAM) grows without
 bound.
 
-Fix: de-duplicate, add `UNIQUE KEY (EmailUserID, GroupID)`, make the REST API
-idempotent (`INSERT IGNORE`). The host already carries a
-`remove_duplicates.sql` from a previous manual clean-up.
+Fix: disable pagination for these API resources or make the plugin follow
+`Content-Range`; de-duplicate; add `UNIQUE KEY (EmailUserID, GroupID)`. The
+host already carries a `remove_duplicates.sql` from a previous manual
+clean-up.
 
 ### M6. Sessions of access-restricted meetings are listed on the calendar [CONFIRMED]
 
@@ -675,8 +680,10 @@ reviewed because they write the user and group tables; details in
   for any group. Acceptable only while the `/login` allow-list is the sole way
   to obtain a token; add client-ID and scope checks in the introspection
   handler.
-* **A3 [Medium, CONFIRMED]** Membership inserts are not idempotent, producing
-  the `UsersGroup` duplication in M5; no values are validated before storage.
+* **A3 [Medium, CONFIRMED]** The API paginates lists at 100 rows and the
+  COmanage plugin reads only the first page, so membership syncs for groups
+  with more than 100 members are not idempotent (M5). No values are validated
+  before storage.
 * **A4 [Low]** Node 12, Express 4.16, Sequelize 5, node-fetch 2 and Hydra
   v1.0.8 are all end-of-life; Dependabot flags the Node dependencies.
 
