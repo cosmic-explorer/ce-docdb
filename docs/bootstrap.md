@@ -81,10 +81,14 @@ The two units run in order:
 
 * `docdb-storage.service` (`docdb-storage.sh`), before MariaDB: if the
   bind-mounted `/var/lib/mysql` is empty, move the `.orig` database files
-  into it; likewise the GLIMPSE index into `/usr2/GLIMPSE` and the `__Static`
-  trees into `/usr1/www/html/{DocDB,public}/Static`; fix ownership. After
-  this the host directories under `STORAGE_PATH` hold the live data and the
-  image copies are deleted.
+  into it; likewise the `__Static` trees into
+  `/usr1/www/html/{DocDB,public}/Static`; fix ownership. The GLIMPSE copy is
+  guarded by `if [ ! -d /usr2/GLIMPSE ]`, but `bootstrap-dcc.sh` has already
+  created that directory on the host, so the staged index is never copied and
+  the script then deletes it. A fresh bootstrap therefore needs a full
+  content-index rebuild (`dcc-glimpse`) afterwards. After this the host
+  directories under `STORAGE_PATH` hold the mutable data and the image copies
+  are deleted.
 * `docdb.service` (`docdb.sh`), after MariaDB: guarded by a marker file
   `/var/lib/mysql/docdb.init` so it runs once. Its SQL replaces the LIGO
   security groups with the Cosmic Explorer ones (`CO:admins`, `CEPIs`,
@@ -102,7 +106,8 @@ MariaDB cleanly (so the MyISAM files on the host are consistent) and take the
 container down. The result is `STORAGE_PATH` populated exactly as the
 production stack expects. Note that the group list `docdb.sh` seeds is the
 2019 one; the groups in production today also include those created later by
-administrators and by the COmanage provisioner (see
+administrators; the COmanage provisioner only updates memberships of
+groups whose names it finds (see
 [database.md](database.md)).
 
 ## Stage 3: the OAuth2 side
@@ -110,8 +115,10 @@ administrators and by the COmanage provisioner (see
 Still inside `bootstrap-dcc.sh`, a temporary Docker network runs Postgres,
 applies Hydra's schema migrations, starts a throwaway Hydra, and registers
 one OAuth2 client, `dcc-rest-api`, whose secret is `DCC_REST_SECRET`. That
-client is what COmanage uses to obtain tokens for the REST API. Its callback
-URL is `https://<DCC_INSTANCE>/rest-dcc/callback`. The Postgres data
+client, with callback URL `https://<DCC_INSTANCE>/rest-dcc/callback`, serves
+manual testing with a REST tool; the COmanage provisioner uses a separately
+registered client whose callback is on the COmanage host (see
+[rest-api.md](rest-api.md)). The Postgres data
 directory is also under `STORAGE_PATH`, so the client registration survives.
 `register-client.sh` exists for adding further clients to the running stack
 later.
@@ -182,9 +189,14 @@ You would need: the qcow2 image, the `apache-shibd` directory with the SP key
 and certificate registered with InCommon (`/root/ce-dcc/apache-shibd/`), the
 real `dcc-environment.sh`, and either the existing `STORAGE_PATH` (keep it;
 the bootstrap script offers to) or a database dump plus the document tree to
-restore into it. Re-running the bootstrap against an existing `STORAGE_PATH`
-is safe because both one-shot units check for existing data before moving
-anything and `docdb.sh` checks its marker file. The Hydra steps would
-recreate the OAuth2 client with the same ID and secret. After that, build
-from this repository and deploy as usual; do not deploy the raw
-`cosmicexplorer/dcc:3.3.0`, which lacks every fix made since.
+restore into it. **Do not re-run the bootstrap on an operating installation.** Both
+`bootstrap-dcc.sh` and `run-dcc.sh` force the node to leave the Swarm (taking
+every service down), `bootstrap-dcc.sh` rebuilds the image that is supposed to
+be frozen, overwrites the mounted Shibboleth configuration and repeats the
+OAuth2 setup, and the GLIMPSE guard described above drops the staged index.
+Keeping `STORAGE_PATH` protects the database and documents but does not make
+the run non-disruptive. Design and rehearse a recovery procedure in a separate
+environment first, preserving the frozen image, storage, credentials and
+configuration. After any recovery, build from this repository and deploy as
+usual; do not deploy the raw `cosmicexplorer/dcc:3.3.0`, which lacks every
+fix made since.

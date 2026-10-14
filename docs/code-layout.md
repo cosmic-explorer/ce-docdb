@@ -4,7 +4,7 @@
 
 ```
 usr1/www/cgi-bin/private/DocDB/   the DocDB application (182 entries)
-usr1/www/cgi-bin/DocDB/           public instance: symlinks + 4 real files
+usr1/www/cgi-bin/DocDB/           public instance: 79 symlinks + 7 regular files
 usr1/www/html/{DocDB,public}/Static/{css,js,img,images}
 etc/httpd/conf.d/dcc-dev.conf     the virtual host; short_urls.*.conf; dcc.public.conf
 etc/shibboleth/                   SP config (shibboleth2.xml, attribute-map.xml, certs)
@@ -28,7 +28,9 @@ etc/cron.daily/{dcc-glimpse,renew-certs.sh}
 | Vendored library | `Defang.pm` (HTML::Defang), `Params/Validate*.pm` | |
 | Templates from upstream | `*.template` | `ProjectGlobals.pm.template` |
 
-Every file is in `package main`. Modules are loaded with `require "X.pm";`
+Application files are in `package main` (the vendored `HTML::Defang` and
+`Params::Validate` use their own packages and `use strict`). Modules are
+loaded with `require "X.pm";`
 (string form, resolved through `use lib "/usr1/www/cgi-bin/private/DocDB/"`
 in `CGIInclude.pm` or the current directory) and simply define subroutines
 and globals; there are no `package` declarations, no `use strict`, and no

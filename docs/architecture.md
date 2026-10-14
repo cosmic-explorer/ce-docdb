@@ -75,11 +75,17 @@ DocDB is deployed twice from one code base:
   credentials), `DocumentDatabase`, `CGIInclude.pm` and `.htaccess` differ.
   With `$Public` set, `Security.pm` denies every modify/create/administer
   check and the access check only passes for revisions with no view groups.
+  Seven entries are regular files rather than symlinks: `SiteConfig.pm`,
+  `ProjectGlobals.pm`, `CGIInclude.pm`, `DocumentDatabase`, `Utilities.pm`,
+  `.htaccess` and an empty `serverstatus.html`. `Utilities.pm` in particular
+  is an independent copy and must be kept in step with the private one when a
+  shared helper is fixed.
 
 Only the subset of scripts needed for browsing exists in the public directory
-(about 85 entries versus 182 in private). Because the symlinks are absolute
-(`/usr1/www/cgi-bin/private/DocDB/...`), the public instance always runs
-exactly the private code.
+(79 symlinks plus the seven regular files, versus 182 entries in private).
+Because the symlinks are absolute (`/usr1/www/cgi-bin/private/DocDB/...`), the
+symlinked scripts always run the private code; the seven regular files can
+differ.
 
 ## Request flow
 
@@ -109,7 +115,11 @@ exactly the private code.
 
 ## URL map
 
-From `dcc-dev.conf`, `short_urls.private.conf` and `short_urls.public.conf`:
+From `dcc-dev.conf`, `short_urls.private.conf` and `short_urls.public.conf`.
+The table shows the configuration's intent; the independent review found that
+several short-URL rules pick the wrong handler or drop the version or format
+parameter (see the security review, additional findings), so not every
+advertised form works today.
 
 | URL | Handled by | Access |
 |-----|------------|--------|
@@ -162,9 +172,12 @@ status 0 (allow) or 1 (deny) based on `CanAccessRevision`. The group name
 
 ## External integrations
 
-* **Shibboleth / InCommon**: the SP (`etc/shibboleth/shibboleth2.xml`) is
-  federated with InCommon and eduGAIN via the MDQ service, plus a LIGO.org
-  and an ORCID gateway IdP. Attributes consumed are listed in
+* **Shibboleth / InCommon**: the SP (`etc/shibboleth/shibboleth2.xml`)
+  downloads the InCommon IdP-only metadata aggregate from
+  `https://mdq.incommon.org/entities/idps/all` (an XML aggregate provider
+  signed with `inc-md-cert-mdq.pem`, not per-entity MDQ lookups) plus the
+  SUGWG ORCID gateway metadata; LIGO.org IdPs come through the InCommon
+  aggregate rather than a separate provider. Attributes consumed are listed in
   `attribute-map.xml` (ePPN, mail, displayName, givenName, sn, affiliation).
   The embedded discovery service at `/shibboleth-ds/` is the landing page.
 * **COmanage → REST API** (see [rest-api.md](rest-api.md)): membership changes in the Cosmic Explorer COmanage

@@ -540,7 +540,7 @@ alias prefix. 16 rows (section 4).
 | `DocTypeID` | int(11) PK | |
 | `ShortType` | varchar(32) | e.g. `T - Technical notes`. `InsertDocument` takes the first `\w` character (`T`) as the alias prefix. |
 | `LongType` | varchar(255) | Description. |
-| `TimeStamp` | timestamp ON UPDATE | Last change to the row. **Load-bearing:** `MiscSQL.pm::FetchNextDocNumber` compares the year of `TimeStamp` with the current year and, if they differ, resets `NextDocNumber` to 1 before use. Because every `UPDATE` (including the counter increment) refreshes `TimeStamp`, the counter restarts in the first allocation of each calendar year. Editing a type's description does not disturb this. |
+| `TimeStamp` | timestamp ON UPDATE | Last change to the row. **Load-bearing:** `MiscSQL.pm::FetchNextDocNumber` compares the year of `TimeStamp` with the current year and, if they differ, resets `NextDocNumber` to 1 before use. Because every `UPDATE` (including the counter increment) refreshes `TimeStamp`, the counter restarts in the first allocation of each calendar year. Editing a type's description before the first allocation of a new year also refreshes the timestamp and suppresses that year's reset. |
 | `NextDocNumber` | int(11) | Per-type counter used for the numeric part of `Document.Alias`; incremented by `UpdateNextDocNumber` after each insert. Not transactional: two simultaneous submissions of the same type could get the same alias. |
 
 #### `Topic`, `TopicHierarchy`, `RevisionTopic`
@@ -912,7 +912,7 @@ LIGO data:
 `docdb.sh` is therefore a historical record, not a description of the live
 database. Re-running it against production would delete the current groups.
 
-### Live configuration (April 2026 dump)
+### Configuration as of the April 2026 dump
 
 The production data has since diverged; the following is what the April 2026
 backup contains and should be treated as the current state.
