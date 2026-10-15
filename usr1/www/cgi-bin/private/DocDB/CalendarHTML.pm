@@ -17,6 +17,8 @@
 #    along with DocDB; if not, write to the Free Software
 #    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+require "InputValidation.pm";  # output escaping (H9)
+
 sub CalendarLink (%) {
   my %Params = @_;
   
@@ -50,7 +52,7 @@ sub CalendarLink (%) {
 
 sub PrintCalendar {
   use DateTime;
-  require "Sorts.pm";
+require "Sorts.pm";
   require "MeetingSecurityUtilities.pm";
   
   my %Params = @_;
@@ -248,8 +250,8 @@ sub PrintDayEvents (%) {
         }  
         print "<td>All day/no time</td>\n";
         print "<td>$EventLink</td>\n";
-        print "<td>$Conferences{$EventID}{Location}</td>\n";
-        print "<td>$Conferences{$EventID}{URL}</td>\n";
+        print "<td>".InputValidation::escape_html($Conferences{$EventID}{Location})."</td>\n";
+        print "<td>".InputValidation::escape_html($Conferences{$EventID}{URL})."</td>\n";
         print "</tr>\n";
       } elsif ($Format eq "summary") {
         print $EventLink,"\n";
@@ -278,8 +280,8 @@ sub PrintDayEvents (%) {
       }  
       print "<td>$StartTime &ndash; $EndTime</td>\n";
       print "<td>$SessionLink</td>\n";
-      print "<td>$Sessions{$SessionID}{Location}</td>\n";
-      print "<td>$Conferences{$EventID}{URL}</td>\n";
+      print "<td>".InputValidation::escape_html($Sessions{$SessionID}{Location})."</td>\n";
+      print "<td>".InputValidation::escape_html($Conferences{$EventID}{URL})."</td>\n";
       print "</tr>\n";
     } elsif ($Format eq "summary") {
       my $SessionLink = &SessionLink(-sessionid => $SessionID);

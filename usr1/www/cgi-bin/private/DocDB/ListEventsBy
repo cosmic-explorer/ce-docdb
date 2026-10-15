@@ -27,6 +27,7 @@ use CGI qw(-nosticky);
 use CGI::Untaint;
 use DBI;
 
+require "InputValidation.pm";  # output escaping (H9)
 require "DocDBGlobals.pm";
 require "MeetingSQL.pm"; 
 
@@ -136,8 +137,8 @@ if (@HashIDs) {
       $DidSession{$SessionID} = $TRUE;
 
       $Title    = SessionLink(-sessionid => $SessionID, -format => "full");
-      $Location = join '<br/>',$Sessions{$SessionID}{Location},
-                               $Sessions{$SessionID}{AltLocation};
+      $Location = join '<br/>',map { InputValidation::escape_html($_) } $Sessions{$SessionID}{Location},
+                                                    $Sessions{$SessionID}{AltLocation};
       $Topics   = TopicListByID({ -linktype => "event", -listformat => "br", -sortby => "name", 
                                   -topicids => $Sessions{$SessionID}{Topics}, });
 
@@ -155,8 +156,8 @@ if (@HashIDs) {
       $DidEvent{$EventID} = $TRUE;
 
       $Title    = EventLink(-eventid => $EventID,);
-      $Location = join '<br/>',$Conferences{$EventID}{Location},
-                               $Conferences{$EventID}{AltLocation};
+      $Location = join '<br/>',map { InputValidation::escape_html($_) } $Conferences{$EventID}{Location},
+                                                    $Conferences{$EventID}{AltLocation};
       $Topics   = TopicListByID({ -linktype => "event", -listformat => "br", -sortby => "name", 
                                   -topicids => $Conferences{$EventID}{Topics}, });
       $Time = 'All day/no time';

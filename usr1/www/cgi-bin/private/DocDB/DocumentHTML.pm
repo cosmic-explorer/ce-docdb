@@ -23,8 +23,10 @@
 #    along with DocDB; if not, write to the Free Software
 #    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+require "InputValidation.pm";  # output escaping (H9)
+
 sub DocumentTable (%) {
-  require "DocumentSQL.pm";
+require "DocumentSQL.pm";
   require "RevisionSQL.pm";
   require "Security.pm";
   require "Sorts.pm";
@@ -223,9 +225,9 @@ sub DocumentTable (%) {
         }  else {
           if ($TableMode ne "Document") {
               if ($TalkSeparatorID) { # TalkSeparator
-                 print "$TalkSeparators{$TalkSeparatorID}{Title}";
+                 print InputValidation::escape_html($TalkSeparators{$TalkSeparatorID}{Title});
               } elsif ($SessionTalkID) { # TalkSeparator
-                 print "$SessionTalks{$SessionTalkID}{HintTitle}";
+                 print InputValidation::escape_html($SessionTalks{$SessionTalkID}{HintTitle});
               }
           }
         }
