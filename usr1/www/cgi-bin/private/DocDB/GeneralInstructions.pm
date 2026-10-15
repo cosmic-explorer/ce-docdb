@@ -158,10 +158,6 @@ HTML
   questions or problems with the DocDB, please send e-mail to the <a
   href="mailto:$DBWebMasterEmail">DocDB administrators</a>.</p>
 
-  <p>For a more technical document on how the database works, see 
-  <a href="http://www-btev.fnal.gov/cgi-bin/public/DocDB/ShowDocument?docid=140">
-  BTeV-doc-140</a>.</p> 
-
   <a name="modtypes" />
   <h2>What do you want to do?</h2>
 

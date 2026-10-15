@@ -159,7 +159,7 @@ sub AuthorListByID {
       }
     }
     $full_list = join ',', map qq($_), @all_emails;
-    $contact_all = " <a href=\"mailto:$full_list\?Subject\=DCC document LIGO\-$DocAlias\"><img src=\"".$ImgURLPath."/mail-all.png\" title\=\"Contact all authors\" alt\=\"Send email to all authors\"></a>";
+    $contact_all = " <a href=\"mailto:$full_list\?Subject\=DCC document $ShortProject\-$DocAlias\"><img src=\"".$ImgURLPath."/mail-all.png\" title\=\"Contact all authors\" alt\=\"Send email to all authors\"></a>";
 
     if (scalar(@all_emails) > 1) {
       $StartHTML .= $contact_all;
@@ -184,13 +184,12 @@ sub AuthorListByID {
     $HTML .= $StartHTML;
     $HTML .= $StartList;
     $MailStart = ' <a href=\'mailto:';      ###
-   #$MailSubject = '?Subject=DCC document LIGO-'.$DocAlias; ###
     ##### VK 09-04-13:
     if ($ListingType eq "speaker") {
       $MailSubject = '';
       $MailEnd = '\'><img src=\''.$ImgURLPath.'/mail.png\' title=\'Contact this speaker\' alt=\'Send email to this speaker\'></a>';
     } else {
-      $MailSubject = '?Subject=DCC document LIGO-'.$DocAlias;
+      $MailSubject = '?Subject=DCC document '.$ShortProject.'-'.$DocAlias;
       $MailEnd = '\'><img src=\''.$ImgURLPath.'/mail.png\' title=\'Contact this author\' alt=\'Send email to this author\'></a>'; 
     }
     #####
@@ -245,7 +244,7 @@ my $DocAlias = FetchDocumentAlias($DocumentID); ###
   ###print "<dd>$AuthorLink</dd>\n";
   print "<dd>$AuthorLink";
   unless (!$EmailAddress) {
-    print " <a href=\"mailto:$EmailAddress\?Subject\=DCC document LIGO\-$DocAlias\"><img src=\"".$ImgURLPath."/mail.png\" title=\"Contact\" alt\=\"Send email\"></a>";
+    print " <a href=\"mailto:$EmailAddress\?Subject\=DCC document $ShortProject\-$DocAlias\"><img src=\"".$ImgURLPath."/mail.png\" title=\"Contact\" alt\=\"Send email\"></a>";
   }
   print "</dd>\n";
 }
@@ -262,7 +261,7 @@ my $DocAlias = FetchDocumentAlias($DocumentID); ###
   ###print "<dd>$AuthorLink</dd>\n";
   print "<dd>$AuthorLink";
   unless (!$EmailAddress) {
-    print " <a href=\"mailto:$EmailAddress\?Subject\=DCC document LIGO\-$DocAlias\"><img src=\"".$ImgURLPath."/mail.png\" title=\"Contact\" alt\=\"Send email\"></a>";
+    print " <a href=\"mailto:$EmailAddress\?Subject\=DCC document $ShortProject\-$DocAlias\"><img src=\"".$ImgURLPath."/mail.png\" title=\"Contact\" alt\=\"Send email\"></a>";
   }
   print "</dd>\n";
 }

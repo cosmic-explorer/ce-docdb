@@ -109,7 +109,7 @@ sub PrintRevisionSignoffInfo ($) { # FIXME: Handle more complicated topologies?
       my ($LinkStart,$MailTo,$LinkEnd,$EmailToAll);
       $LinkStart = " <a href\=\"mailto:";
       $MailTo = join ',', map qq($_), @AllAddresses;
-      $LinkEnd = "\?Subject\=DCC document LIGO-$DocAlias\"><img src\=\"".$ImgURLPath."/mail-all.png\" title\=\"Contact all signers\" alt\=\"Email all signers\"></a>";
+      $LinkEnd = "\?Subject\=DCC document $ShortProject-$DocAlias\"><img src\=\"".$ImgURLPath."/mail-all.png\" title\=\"Contact all signers\" alt\=\"Email all signers\"></a>";
       $EmailToAll = $LinkStart.$MailTo.$LinkEnd;
       print "$EmailToAll\n";
     }
@@ -259,8 +259,7 @@ sub SignatureLink ($) {
      $Link .= "</a>";
      GetSignerEmail($EmailUserID); ###
     #my $Name = $EmailUser{$EmailUserID}{Name}; ###
-    #$mail = " <a href\=\"mailto:$EmailAddress\?Subject\=DCC document LIGO\-$DocAlias\"><img src\=\"".$ImgURLPath."/mail.png\" title\=\"Contact $Name\"></a>"; ###
-     $mail = " <a href\=\"mailto:$EmailAddress\?Subject\=DCC document LIGO\-$DocAlias\"><img src\=\"".$ImgURLPath."/mail.png\" title\=\"Contact this signer\"></a>"; ###
+     $mail = " <a href\=\"mailto:$EmailAddress\?Subject\=DCC document $ShortProject\-$DocAlias\"><img src\=\"".$ImgURLPath."/mail.png\" title\=\"Contact this signer\"></a>"; ###
      $Link .= $mail; ###
 
   return $Link;
