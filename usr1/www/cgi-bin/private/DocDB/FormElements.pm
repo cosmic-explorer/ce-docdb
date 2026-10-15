@@ -333,6 +333,17 @@ sub UpdateButton {
 
 sub UpdateDBButton {
   my ($DocumentID,$Version,$QAState) = @_;
+
+  # The callers in RevisionHTML pass a variable that is never set, so the
+  # hidden qastat field was empty and a certifier or administrator saving a
+  # minor edit silently cleared certification (D05). Take the current state
+  # from the revision when none is supplied.
+  unless (defined $QAState && length $QAState) {
+    require "RevisionSQL.pm";
+    my $DocRevID = FetchRevisionByDocumentAndVersion($DocumentID,$Version);
+    FetchDocRevisionByID($DocRevID);
+    $QAState = $DocRevisions{$DocRevID}{QAcheck} ? 1 : 0;
+  }
  
   $query -> param('mode','updatedb');
   $query -> param('docid',  $DocumentID);

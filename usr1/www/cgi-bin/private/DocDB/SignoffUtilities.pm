@@ -124,7 +124,7 @@ sub RevisionStatus ($) { # Return the approval status of a revision
   }
 
   # Find last approved version
-  if ($Signoff eq "Approved") {
+  if ($Status eq "Approved") {   # was $Signoff, which is never set (L19)
     $LastDocRevID = $DocRevID;
   } elsif ($Status eq "Unapproved") {
     my $DocumentID = $DocRevisions{$DocRevID}{DOCID};

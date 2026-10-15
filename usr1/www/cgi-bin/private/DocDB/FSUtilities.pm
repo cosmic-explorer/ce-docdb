@@ -366,7 +366,6 @@ sub ProtectDirectory { # Write (or delete) correct .htaccess file in directory
 # &FileNameSanityCheck() failure!
 sub ProcessUpload ($$) {
     use File::Basename;
-  my $test = "";
   my ($new_dir,$long_file) = @_;
 
   my $short_file = basename($long_file);
@@ -378,14 +377,42 @@ sub ProcessUpload ($$) {
   if (scalar(@ErrorStack) > $ErrorsBefore) {
     return "";
   }
-  open (OUTFILE,">$new_dir/$short_file");
-  while ($bytes_read = read($long_file,$buffer,1024)) {
-    print OUTFILE $buffer
-  }
-  close OUTFILE;
 
-  unless (-s "$new_dir/$short_file") {
-    push @WarnStack,"The file $short_file ($long_file) did not exist or was blank.";
+  # Write to a temporary name and rename into place only after every read,
+  # write and close succeeded, so a failed or empty upload can neither
+  # truncate an existing file of the same name nor be reported as a success
+  # (reliability finding D02). Failures go on @ErrorStack and return "".
+  my $final = "$new_dir/$short_file";
+  my $temp  = "$new_dir/.upload-$$-$short_file";
+  my $ok    = 1;
+  my $total = 0;
+  my ($bytes_read, $buffer);
+  if (open(my $out, ">", $temp)) {
+    binmode $out;
+    while (1) {
+      $bytes_read = read($long_file, $buffer, 65536);
+      unless (defined $bytes_read) { $ok = 0; last; }
+      last if $bytes_read == 0;
+      unless (print $out $buffer) { $ok = 0; last; }
+      $total += $bytes_read;
+    }
+    $ok = 0 unless close($out);
+  } else {
+    $ok = 0;
+  }
+  if ($ok && $total == 0) {
+    $ok = 0;
+    push @ErrorStack,"The file $short_file did not exist or was blank; nothing was stored.";
+  } elsif (!$ok) {
+    push @ErrorStack,"Storing the file $short_file failed; the previous copy, if any, was left untouched.";
+  }
+  if ($ok && !rename($temp, $final)) {
+    $ok = 0;
+    push @ErrorStack,"Storing the file $short_file failed; the previous copy, if any, was left untouched.";
+  }
+  unless ($ok) {
+    unlink $temp;
+    return "";
   }
   return $short_file;
 }

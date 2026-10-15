@@ -282,6 +282,11 @@ sub InsertRevision {
   }
 
   my $MakeObsolete = $FALSE;
+  # "new" (used by XMLClone/XMLUpload for a fresh document) behaves like
+  # "bump"; it used to be bound as a literal into the integer version (D09).
+  if ($Version eq "new") {
+    $Version = "bump";
+  }
   if ($Version ne "bump" && $Version ne "reserve") {
     $MakeObsolete = $TRUE;
   }

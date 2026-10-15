@@ -30,6 +30,41 @@
 #  User        -- Username for wget
 #  NewFilename -- New name of files (wget -O option)
 
+# Return the final file names that occur more than once in a %Files hash
+# (two upload slots with the same basename, or a copied file colliding with
+# an upload). Called before anything is written (reliability finding D06).
+sub DuplicateFileNames ($) {
+  require "MiscSQL.pm";
+  my ($FilesRef) = @_;
+  my %Seen = ();
+  my @Duplicates = ();
+  foreach my $Key (sort keys %{$FilesRef}) {
+    my $Entry = $FilesRef->{$Key};
+    my $Name  = "";
+    if ($Entry->{File}) {
+      my @Parts = split /[\/\\]/, "$Entry->{File}";
+      $Name = pop @Parts;
+    } elsif ($Entry->{Filename}) {
+      my @Parts = split /\//, $Entry->{Filename};
+      $Name = pop @Parts;
+    } elsif ($Entry->{URL}) {
+      if ($Entry->{NewFilename}) {
+        $Name = $Entry->{NewFilename};
+      } else {
+        my @Parts = split /\//, $Entry->{URL};
+        $Name = pop @Parts;
+      }
+    } elsif ($Entry->{CopyFileID}) {
+      $Name = FetchFile($Entry->{CopyFileID});
+    } elsif ($Entry->{FileID}) {
+      $Name = FetchFile($Entry->{FileID});
+    }
+    next unless defined $Name && length $Name;
+    push @Duplicates, $Name if ++$Seen{$Name} == 2;
+  }
+  return @Duplicates;
+}
+
 sub AddFiles (%) {
   require "FileSQL.pm";
   require "MiscSQL.pm";
@@ -52,6 +87,7 @@ sub AddFiles (%) {
   }
 
   my @Files = sort keys %Files;
+  my %Added = ();   # names already recorded for this revision in this call (D06)
 
   &FetchDocRevisionByID($DocRevID);
   my $Version    = $DocRevisions{$DocRevID}{Version};
@@ -85,6 +121,11 @@ sub AddFiles (%) {
     if ($ReplaceOld && $ShortName) {
       my $OldFileID = &ExistsFile($DocRevID,$ShortName);
       &DeleteFile(-fileid => $OldFileID);
+    }
+
+    if ($ShortName && $Added{$ShortName}++) {
+      push @WarnStack,"A second file named $ShortName was skipped; file names must be distinct within a revision.";
+      $ShortName = "";
     }
 
     if ($ShortName) {
