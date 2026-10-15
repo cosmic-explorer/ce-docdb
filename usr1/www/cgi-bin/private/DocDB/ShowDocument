@@ -174,8 +174,12 @@ my $PageTitle = "$ShortProject-$DocumentNumber-v$Version: Not authorized";
 
 $EmailUserID or my $EmailUserID = 0;
 
+# Requester is an Author ID; compare it with the caller's Author ID (M2).
+my $CallerAuthorID = ($EmailUserID && !$Public) ? FetchAuthorIDFromEmailUserID($EmailUserID) : 0;
+
 if (&CanAccess($DocumentID,$Version, $EmailUserID) ||
-   (($Documents{$DocumentID}{Requester} == $EmailUserID) && $EmailUserID != 0 && !$Public)) {
+   ($CallerAuthorID && $Documents{$DocumentID}{Requester} &&
+    $Documents{$DocumentID}{Requester} == $CallerAuthorID && !$Public)) {
    if ($Version == 0) {
       $PageTitle = "$ShortProject-$DocumentNumber-x$Version: $DocRevisions{$DocRevID}{Title}";
    } elsif (defined $DocRevID && $DocRevID != 0 && $Version <= $Documents{$DocumentID}{NVersions}) {
