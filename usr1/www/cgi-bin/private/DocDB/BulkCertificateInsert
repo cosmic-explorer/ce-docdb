@@ -23,10 +23,10 @@
 #    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 use CGI qw(-nosticky);
-use CGI::Untaint;
 use DBI;
 
 require "DocDBGlobals.pm";
+require "UntaintParams.pm";
 require "AdministerElements.pm";
 require "ResponseElements.pm";
 require "Scripts.pm";
@@ -44,14 +44,14 @@ $query = new CGI;  # Global for subroutines
 
 # Parameters to script
 
-my $Untaint   = CGI::Untaint -> new($query -> Vars);
+my %Untaint = $query -> Vars;
 my %CGIParams = $query -> Vars;
 
-my $Password = $Untaint -> extract (-as_printable => "password")  || "";
-my $Username = $Untaint -> extract (-as_printable => "admuser")   || "";
-my $Action   = $Untaint -> extract (-as_printable => "admaction") || "";
-my $Force    = $Untaint -> extract (-as_printable => "admforce")  || "";
-my $CanSign  = $Untaint -> extract (-as_printable => "CanSign")   || "";
+my $Password = UntaintPrintable(\%Untaint, "password");
+my $Username = UntaintPrintable(\%Untaint, "admuser");
+my $Action   = UntaintPrintable(\%Untaint, "admaction");
+my $Force    = UntaintPrintable(\%Untaint, "admforce");
+my $CanSign  = UntaintPrintable(\%Untaint, "CanSign");
 my @GroupIDs = split /\0/,$CGIParams{group};
 
 if ($CanSign) {$CanSign = $TRUE;}
@@ -95,8 +95,8 @@ if ($Action eq "Insert") {
   my $UsersGroupInsert = $dbh -> prepare("insert into UsersGroup (UsersGroupID,EmailUserID,GroupID) values (0,?,?)");
 
   foreach my $Row (1..$MaxUsers) {
-    my $Name     = $Untaint -> extract (-as_printable => "name$Row")  || "";
-    my $Email    = $Untaint -> extract (-as_printable => "email$Row") || "";
+    my $Name     = UntaintPrintable(\%Untaint, "name$Row");
+    my $Email    = UntaintPrintable(\%Untaint, "email$Row");
     my $Username = $Name;
        $Username =~ s/\W//g;
 

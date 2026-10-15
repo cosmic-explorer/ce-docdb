@@ -24,10 +24,10 @@
 #    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 use CGI qw(-nosticky);
-use CGI::Untaint;
 use DBI;
 
 require "DocDBGlobals.pm";
+require "UntaintParams.pm";
 require "MeetingSQL.pm"; 
 
 require "DBUtilities.pm"; 
@@ -44,10 +44,10 @@ $query = new CGI;  # Global for subroutines
 
 # Parameters to script 
 
-my $Untaint = CGI::Untaint -> new($query -> Vars);
+my %Untaint = $query -> Vars;
 
-my $TopicID  = $Untaint -> extract (-as_integer => "topicid")  || 0;
-my $AuthorID = $Untaint -> extract (-as_integer => "authorid") || 0;
+my $TopicID  = UntaintInteger(\%Untaint, "topicid");
+my $AuthorID = UntaintInteger(\%Untaint, "authorid");
 
 $query -> delete_all();
 
