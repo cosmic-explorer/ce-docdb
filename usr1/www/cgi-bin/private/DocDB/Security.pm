@@ -212,11 +212,17 @@ sub CanModify { # Can the user modify (with current security) this document
 #   MCA: Check if the Submitter is trying to access the document
 #
     FetchDocRevisionByID($DocRevID);
+    # Submitter and Requester are Author IDs; the caller is identified by an
+    # EmailUser ID. Convert before comparing (M2). The two sequences happen
+    # to coincide for provisioned accounts, but not for authors added by
+    # hand, and an undefined/zero author must never match.
     my $SubmitterID = $DocRevisions{$DocRevID}{Submitter};
-    if ($SubmitterID == $EmailUserID) {
+    my $CallerAuthorID = FetchAuthorIDFromEmailUserID($EmailUserID);
+    if ($CallerAuthorID && $SubmitterID && $SubmitterID == $CallerAuthorID) {
        $CanModify = 1;
     }
-    if ($Documents{$DocumentID}{Requester} == $EmailUserID) {
+    if ($CallerAuthorID && $Documents{$DocumentID}{Requester} &&
+        $Documents{$DocumentID}{Requester} == $CallerAuthorID) {
        $CanModify = 1;
     }
 
