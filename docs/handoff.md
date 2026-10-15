@@ -13,8 +13,10 @@ search redirect scoped to dcc.cosmicexplorer.org with the query encoded,
 private instance came back after 24 minutes of shibd start-up; unauthenticated
 requests to `DocumentDatabase`, `ListEventsBy`, `TopicAdminister` and
 `ShowDocument` now redirect to the login discovery page (302) instead of
-failing. Logged-in checks (events-by-topic page loads, no "Initiate P&P
-Review" button, break rows keep their locations) are for the user to confirm.
+failing. Logged-in check confirmed by the user 2026-10-15: `ListEventsBy` by topic and
+by moderator render. Still to eyeball when convenient: no "Initiate P&P
+Review" button on a presentation, and break rows keep their locations in the
+meeting editor.
 Old `ce-cef36b92168d` container removed; the image is kept for rollback. Tag pinned in
 ce-it-infrastructure PR for `dcc/dcc.yml`. Previous image `ce-cef36b92168d`
 kept for rollback (`docker service update --image ... dcc_dcc`).
