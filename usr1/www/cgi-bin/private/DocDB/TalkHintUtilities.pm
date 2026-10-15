@@ -62,8 +62,8 @@ sub FuzzyStringMatch ($$) {
   
   my ($String1,$String2) = @_;
   
-  $String1 =~ s/\W//g; # FIXME: Should be better way to ignore ()'s
-  $String2 =~ s/\W//g;
+  $String1 =~ s/[^\w\s]//g; # drop punctuation but keep the spaces we split on (L19)
+  $String2 =~ s/[^\w\s]//g;
  
   $String1 =~ tr/[A-Z]/[a-z]/;
   $String2 =~ tr/[A-Z]/[a-z]/;

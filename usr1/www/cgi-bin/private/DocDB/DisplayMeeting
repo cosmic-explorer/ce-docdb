@@ -125,7 +125,7 @@ EndPage(@ErrorStack);
 if ($DisplayMode eq "Session" || $DisplayMode eq "SingleSession") { 
   ReHintTalksBySessionID($SessionID); 
   FetchSessionByID($SessionID);
-} elsif ($DisplayMode eq $Event) {
+} elsif ($DisplayMode eq "Event") {   # was $Event, an unset variable (L19)
   my @SessionIDs = FetchSessionsByConferenceID($EventID);
   foreach my $SessionID (@SessionIDs) {
     ReHintTalksBySessionID($SessionID); 

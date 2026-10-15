@@ -293,6 +293,10 @@ if ($Mode eq "add") {
 
 ### Check parameters for errors
 
+foreach my $DuplicateName (DuplicateFileNames(\%Files)) {
+  push @ErrorStack,"The file name $DuplicateName appears more than once in this submission; each file must have a distinct name.";
+}
+
 unless (&CanCreate()) {
   push @ErrorStack,"You are not allowed to modify or create documents.";
 }

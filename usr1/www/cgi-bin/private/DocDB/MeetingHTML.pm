@@ -244,6 +244,11 @@ sub SessionEntryForm (%) {
     TextField(-default  => $SessionDefaultLocation,
               -name     => "sessionlocation", -helplink  => "", -helptext => "",
               -size     => 35,                -maxlength => 128, );
+    if ($SessionType eq "Break") {
+      # Breaks have no alternate location, but MeetingModify shifts one value
+      # per row off the sessionaltlocation list, so keep the lists aligned (MT03).
+      print "<input type=\"hidden\" name=\"sessionaltlocation\" value=\"\">\n";
+    }
     if ($SessionType ne "Break") {
       print "</div><div>\n";
       TextField(-default  => $SessionDefaultAltLocation,

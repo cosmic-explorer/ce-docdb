@@ -106,8 +106,7 @@ if ($Mode ne "add"     &&
 unless ($Archive) { $Archive = ''; }
 
 &SetUploadMethod();
-my $Overdate = '';
-&SetDateOverride();
+&SetDateOverride();   # sets the global $Overdate; a lexical here hid it (D08)
 &SetAuthorMode();
 &SetTopicMode();
 
@@ -494,7 +493,10 @@ PrintActionButton;
 ### Document type and date override (if present)
 
 print "<tr>\n<td colspan=\"2\">\n";
-if ($Mode eq "reserve" || $Mode eq "use") {
+# Offer the type selector whenever there is no type to carry forward; the
+# direct Add form used to render a fixed, empty type that the handler then
+# rejected (D07).
+if ($Mode eq "reserve" || $Mode eq "use" || $Mode eq "add" || !$DocTypeIDDefault) {
    &DocTypeButtons(-required => $RequiredEntries{Type}, 
                    -default  => $DocTypeIDDefault);
 } else {
