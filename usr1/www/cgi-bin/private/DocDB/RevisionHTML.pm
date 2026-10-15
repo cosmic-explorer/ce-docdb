@@ -23,6 +23,8 @@
 #    along with DocDB; if not, write to the Free Software
 #    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+require "InputValidation.pm";  # output escaping (H9)
+
 sub DccNumberBox (%) {
   my (%Params) = @_;
   #FIXME: Get rid of global default
@@ -173,7 +175,7 @@ sub DocTypeText ($) {
 };
 
 sub PrintRevisionInfo {
-  require "FormElements.pm";
+require "FormElements.pm";
   require "Security.pm";
 
   require "AuthorSQL.pm";
@@ -575,7 +577,7 @@ sub PrintEventInfo (%) {
           print " held on $Start ";
         }
         if ($Conferences{$EventID}{Location}) {
-          print " in $Conferences{$EventID}{Location}";
+          print " in ".InputValidation::escape_html($Conferences{$EventID}{Location});
         }
         print "</dd>\n";
       }

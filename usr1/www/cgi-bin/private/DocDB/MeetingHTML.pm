@@ -21,8 +21,10 @@
 #    along with DocDB; if not, write to the Free Software
 #    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+require "InputValidation.pm";  # output escaping (H9)
+
 sub LocationBox (;%) {
-  require "FormElements.pm";
+require "FormElements.pm";
 
   my (%Params) = @_;
 
@@ -362,7 +364,7 @@ sub SessionLink (%) {
     }
   }
 
-  my $Link = "<a href=\"$URL\" title=\"$ToolTip\">$Text</a>";
+  my $Link = "<a href=\"$URL\" title=\"".InputValidation::escape_attr($ToolTip)."\">".InputValidation::escape_html($Text)."</a>";
 
   return $Link;
 }
@@ -400,7 +402,7 @@ sub SessionSeparatorLink ($) {
     $Text = $SessionSeparators{$SessionSeparatorID}{Title};
   }
 
-  my $Link = "<a href=\"$URL\" title=\"$ToolTip\">$Text</a>";
+  my $Link = "<a href=\"$URL\" title=\"".InputValidation::escape_attr($ToolTip)."\">".InputValidation::escape_html($Text)."</a>";
 
   return $Link;
 }
@@ -471,16 +473,16 @@ sub PrintSessionSeparator ($) {
   require "SQLUtilities.pm";
 
   print "<table class=\"MedPaddedTable CenteredTable\"><tr>\n";
-  print "<td><div><dl><dt><b>$SessionSeparators{$SessionSeparatorID}{Title}</b></dt>\n";
+  print "<td><div><dl><dt><b>".InputValidation::escape_html($SessionSeparators{$SessionSeparatorID}{Title})."</b></dt>\n";
   print "<dd>",&EuroDate($SessionSeparators{$SessionSeparatorID}{StartTime});
   print " at ";
   print &EuroTimeHM($SessionSeparators{$SessionSeparatorID}{StartTime});
   print "</dd></dl></div></td> \n";
   if ($SessionSeparators{$SessionSeparatorID}{Location}) {
-    print "<td><div><dl><dt><b>Location:</b></dt><dd>$SessionSeparators{$SessionSeparatorID}{Location}</dd></dl></div></td>\n";
+    print "<td><div><dl><dt><b>Location:</b></dt><dd>".InputValidation::escape_html($SessionSeparators{$SessionSeparatorID}{Location})."</dd></dl></div></td>\n";
   }
   if ($SessionSeparators{$SessionSeparatorID}{Description}) {
-    print "<td><div><dl><dt><b>Description:</b></dt><dd>$SessionSeparators{$SessionSeparatorID}{Description}</dd></dl></div></td>\n";
+    print "<td><div><dl><dt><b>Description:</b></dt><dd>".URLify(AddLineBreaks($SessionSeparators{$SessionSeparatorID}{Description}))."</dd></dl></div></td>\n";
   }
   print "</tr></table>\n";
   print "<hr/>\n";
@@ -495,13 +497,13 @@ sub PrintSessionHeader ($) {
   my $ConferenceID = $Sessions{$SessionID}{ConferenceID};
 
   print "<h4><a name=\"sess$SessionID\" />Session: ".
-        "<a href=\"$DisplayMeeting?sessionid=$SessionID\">$Sessions{$SessionID}{Title}</a> begins \n";
+        "<a href=\"$DisplayMeeting?sessionid=$SessionID\">".InputValidation::escape_html($Sessions{$SessionID}{Title})."</a> begins \n";
   print &EuroDate($Sessions{$SessionID}{StartTime});
   print " at ";
   print &EuroTimeHM($Sessions{$SessionID}{StartTime});
   print "</h4>\n";
   if ($Sessions{$SessionID}{Location}) {
-    print "<h5>Location: $Sessions{$SessionID}{Location}</h5>\n";
+    print "<h5>Location: ".InputValidation::escape_html($Sessions{$SessionID}{Location})."</h5>\n";
   }
 
   if (CanCreate() || CanModifyMeeting($ConferenceID)) {
@@ -615,7 +617,7 @@ sub PrintEventRightSidebar ($) {
     if ($EventID == $OtherEventID) {
 
       if ($DisplayMode eq "SingleSession" || $DisplayMode eq "Event") {
-        print "<li><strong>",$Conferences{$EventID}{Title},"</strong>\n";
+        print "<li><strong>",InputValidation::escape_html($Conferences{$EventID}{Title}),"</strong>\n";
       } else {
         print "<li>",EventLink(-eventid => $OtherEventID, -tooltip => "Date"),"\n";
       }
@@ -630,7 +632,7 @@ sub PrintEventRightSidebar ($) {
           my $OtherSeparatorID = $MeetingOrders{$MeetingOrderID}{SessionSeparatorID};
           if ($OtherSessionID) {
             if ($OtherSessionID == $SessionID) {
-              print "<li><strong>",$Sessions{$SessionID}{Title},"</strong></li>\n";
+              print "<li><strong>",InputValidation::escape_html($Sessions{$SessionID}{Title}),"</strong></li>\n";
             } else {
               FetchSessionByID($OtherSessionID);
               my $Link = SessionLink(-sessionid => $OtherSessionID,
@@ -639,7 +641,7 @@ sub PrintEventRightSidebar ($) {
             }
           } elsif ($OtherSeparatorID) {
             if ($OtherSeparatorID == $SeparatorID) {
-              print "<li><strong>",$SessionSeparators{$SeparatorID}{Title},"</strong></li>\n";
+              print "<li><strong>",InputValidation::escape_html($SessionSeparators{$SeparatorID}{Title}),"</strong></li>\n";
             } else {
               FetchSessionSeparatorByID($OtherSeparatorID);
               my $Link = SessionSeparatorLink({-sessionseparatorid => $OtherSeparatorID,
@@ -721,11 +723,11 @@ sub EventHeader ($) {
   }
 
   if ($Conferences{$EventID}{Location}) {
-    $Fields{"Event Location"} = $Conferences{$EventID}{Location};
+    $Fields{"Event Location"} = InputValidation::escape_html($Conferences{$EventID}{Location});
   }
 
   if ($Conferences{$EventID}{AltLocation}) {
-    $Fields{"Alt. Event Location"} = $Conferences{$EventID}{AltLocation};
+    $Fields{"Alt. Event Location"} = InputValidation::escape_html($Conferences{$EventID}{AltLocation});
   }
 
   if (@{$Conferences{$EventID}{Topics}}) {
@@ -752,11 +754,11 @@ sub EventHeader ($) {
   }
 
   if ($Sessions{$SessionID}{Location}) {
-    $Fields{"Location"} = $Sessions{$SessionID}{Location};
+    $Fields{"Location"} = InputValidation::escape_html($Sessions{$SessionID}{Location});
   }
 
   if ($Sessions{$SessionID}{AltLocation}) {
-    $Fields{"Alt. Location"} = $Sessions{$SessionID}{AltLocation};
+    $Fields{"Alt. Location"} = InputValidation::escape_html($Sessions{$SessionID}{AltLocation});
   }
 
   if (@{$Sessions{$SessionID}{Topics}}) {
@@ -775,7 +777,12 @@ sub EventHeader ($) {
   }
 
   if ($Conferences{$EventID}{URL}) {
-    $Fields{"External URL"} = "<a href=\"$Conferences{$EventID}{URL}\">$Conferences{$EventID}{Title}</a>";
+    # Only link http(s) URLs; anything else is shown as text.
+    if ($Conferences{$EventID}{URL} =~ m{\Ahttps?://}i) {
+      $Fields{"External URL"} = "<a href=\"".InputValidation::escape_attr($Conferences{$EventID}{URL})."\">".InputValidation::escape_html($Conferences{$EventID}{Title})."</a>";
+    } else {
+      $Fields{"External URL"} = InputValidation::escape_html($Conferences{$EventID}{URL});
+    }
   }
 
   if ($Conferences{$EventID}{Preamble}) {
@@ -848,9 +855,9 @@ sub SessionInfo ($) {
   $HTML .= "<tr class=\"$RowClass\">";
   $HTML .= '<td class="Date">'.EuroDateHM($Sessions{$SessionID}{StartTime}).'</td>';
   $HTML .= "<td><a href=\"$DisplayMeeting?sessionid=$SessionID\">";
-  $HTML .=     "$Sessions{$SessionID}{Title}</a></td>";
+  $HTML .=     InputValidation::escape_html($Sessions{$SessionID}{Title})."</a></td>";
   $HTML .= '<td>'.URLify(AddLineBreaks($Sessions{$SessionID}{Description})).'</td>';
-  $HTML .= '<td>'.$Sessions{$SessionID}{Location}              .'</td>';
+  $HTML .= '<td>'.InputValidation::escape_html($Sessions{$SessionID}{Location}).'</td>';
   $HTML .= '<td>'.TopicListByID({
               -linktype   => "event", -topicids    => $Sessions{$SessionID}{Topics},
               -listformat => "br",    -listelement => "short", -sortby => "name",
@@ -879,7 +886,7 @@ sub PrintSessionSeparatorInfo ($) {
   print "<td class=\"Date\">",EuroDateHM($SessionSeparators{$SessionSeparatorID}{StartTime}),"</td>\n";
   print "<td>$Link</td>\n";
   print "<td>",URLify(AddLineBreaks($SessionSeparators{$SessionSeparatorID}{Description})),"</td>\n";
-  print "<td>",$SessionSeparators{$SessionSeparatorID}{Location},"</td>\n";
+  print "<td>",InputValidation::escape_html($SessionSeparators{$SessionSeparatorID}{Location}),"</td>\n";
   print '<td>&nbsp;</td><td>&nbsp;</td>'; # Topics and Moderators
 }
 
@@ -935,11 +942,11 @@ sub EventLink (%) {
     $ToolTip = $Conferences{$EventID}{Full};
   }
 
-  my $Link  = "<a href=\"$URL\" class=\"$Class\" title=\"$ToolTip\">";
+  my $Link  = "<a href=\"$URL\" class=\"$Class\" title=\"".InputValidation::escape_attr($ToolTip)."\">";
   if ($Format eq "long") {
-    $Link .= $Conferences{$EventID}{LongDescription};
+    $Link .= InputValidation::escape_html($Conferences{$EventID}{LongDescription});
   } else {
-    $Link .= $Conferences{$EventID}{Title};
+    $Link .= InputValidation::escape_html($Conferences{$EventID}{Title});
   }
   $Link .= "</a>";
 
@@ -1094,7 +1101,7 @@ sub EventsByGroup (%) {
            } else {
               print "<td></td>\n";
            }
-           print "<td class='eventlocation'>",$Conferences{$EventID}{Location},"</td>";
+           print "<td class='eventlocation'>",InputValidation::escape_html($Conferences{$EventID}{Location}),"</td>";
         }
      }
      print "</tr>\n";
