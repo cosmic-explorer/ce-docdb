@@ -6,6 +6,16 @@ unless stated.
 
 ## Production state
 
+**Deployed 2026-10-15 (Release 3):** `dcc_dcc` runs `cosmicexplorer/dcc:ce-3f009b06f264`
+(`main` 3f009b0, PRs #4 to #12). Public instance verified after the roll:
+search redirect scoped to dcc.cosmicexplorer.org with the query encoded,
+`DocumentDatabase`, `ListAllMeetings`, `ListBy`, `ListTopics` all 200. The
+private instance was in its usual ~30-minute shibd start-up (500) at the
+time of writing; the user is to confirm `ListEventsBy`/`TopicAdminister` load
+and that no "Initiate P&P Review" button appears. Tag pinned in
+ce-it-infrastructure PR for `dcc/dcc.yml`. Previous image `ce-cef36b92168d`
+kept for rollback (`docker service update --image ... dcc_dcc`).
+
 **Deployed 2026-10-14 (afternoon, US Eastern):** `dcc_dcc` now runs
 `cosmicexplorer/dcc:ce-cef36b92168d`, which is `main` at the merge of PRs #1,
 #2 and #3 (Releases 1 and 2 plus the independent-review fixes). Verified after
