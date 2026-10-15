@@ -230,14 +230,15 @@ sub IndexOf {
 # If AddLineBreaks and URLify will be called on the same input,
 # AddLineBreaks MUST BE CALLED FIRST!
 sub URLify {
-   use Sys::Hostname;
-   my $host_name = 'https://'.hostname.'.ligo.org';
    my ($Text) = @_;
+   # Document numbers mentioned in text link to this instance's ShowDocument
+   # (they used to link to https://<hostname>.ligo.org/<alias>).
+   my $Prefix = defined $ShortProject && length $ShortProject ? quotemeta($ShortProject) : 'CE';
    # Carefully selected tags that flag content that would get broken
    # if we start sticking URL's in them.
    if ($Text !~ m/<(br|tr|td|dd|table|div|span|pre|center|p|\/a)>/) {
       $Text =~ s/([^\=\>])?((https|http|ftp|file):[\/]+[^\,\s\n\t<]+)/$1<a href=$2>$2<\/a>/ig;
-      $Text =~ s/([\s\n\t])((LIGO-)?[A-Z]\d{6,8}(-[xv]\d+)?)/$1<a href=$host_name\/$2>$2<\/a>/ig;
+      $Text =~ s/([\s\n\t])((?:$Prefix-)?([A-Z]\d{6,8}(?:-[xv]\d+)?))/$1<a href="$ShowDocument?docid=$3">$2<\/a>/ig;
    }
    $Text = &SafeHTML($Text);
    return $Text;           

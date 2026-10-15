@@ -45,7 +45,7 @@ print "<center>(display membership of
        <a href=\"$ListGroupUsers\">Access Groups</a>,
        <a href=\"$ListAuthorGroups\">Author Groups</a>,
        <a href=\"$ListEmailUsers\">Users' Group Memberships</a>, or
-       <a href=\"https://dcc.ligo.org/wiki/index.php/Onion\">help
+       <a href=\"$WikiHelpPage\">help
        on group relationships</a>)</center>\n";
 print "<p><p>\n";
 print '<table class="CenteredTable MedPaddedTable">';
