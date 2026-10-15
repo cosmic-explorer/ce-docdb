@@ -27,10 +27,10 @@
 
 
 use CGI qw(-nosticky);
-use CGI::Untaint;
 use DBI;
 
 require "DocDBGlobals.pm";
+require "UntaintParams.pm";
 require "AdministerElements.pm";
 require "ResponseElements.pm";
 require "Scripts.pm";
@@ -48,17 +48,17 @@ $query = new CGI;  # Global for subroutines
 
 # Parameters to script 
 
-my $Untaint = CGI::Untaint -> new($query -> Vars);
+my %Untaint = $query -> Vars;
 
-my $Password      = $Untaint -> extract (-as_printable => "password")    || "";
-my $Username      = $Untaint -> extract (-as_printable => "admuser")     || "";
-my $Action        = $Untaint -> extract (-as_printable => "admaction")   || "";
-my $Force         = $Untaint -> extract (-as_printable => "admforce")    || "";
+my $Password      = UntaintPrintable(\%Untaint, "password");
+my $Username      = UntaintPrintable(\%Untaint, "admuser");
+my $Action        = UntaintPrintable(\%Untaint, "admaction");
+my $Force         = UntaintPrintable(\%Untaint, "admforce");
 
-my $TopicID       = $Untaint -> extract (-as_integer   => "topics")      || 0;
-my $ParentTopicID = $Untaint -> extract (-as_integer   => "parenttopic") || 0;
-my $LongName      = $Untaint -> extract (-as_printable => "longdesc")    || "";
-my $ShortName     = $Untaint -> extract (-as_printable => "shortdesc")   || "";
+my $TopicID       = UntaintInteger(\%Untaint, "topics");
+my $ParentTopicID = UntaintInteger(\%Untaint, "parenttopic");
+my $LongName      = UntaintPrintable(\%Untaint, "longdesc");
+my $ShortName     = UntaintPrintable(\%Untaint, "shortdesc");
 
 
 $query -> delete_all();
