@@ -220,6 +220,9 @@ message stack or a parameter; replace the inline redirect script in
 
 ### H9. Stored cross-site scripting through meeting, session and talk text [CONFIRMED]
 
+Fixed in Release 3 ([PR #7](https://github.com/cosmic-explorer/ce-docdb/pull/7)): every raw output site escaped, external URL linked only when http(s).
+
+
 `MeetingModify:54-94` and `SessionModify:661-702` store title, long
 description, location, preamble, epilogue, session title and description,
 talk title and note without any sanitiser; they are rendered raw in
@@ -233,6 +236,9 @@ Fix: pass these fields through `SafeHTML()` (and upgrade it, M1) or
 `HTML::Entities::encode` at output.
 
 ### H10. P&P review hook sends document metadata to a LIGO development host [CONFIRMED]
+
+Fixed in Release 3 ([PR #6](https://github.com/cosmic-explorer/ce-docdb/pull/6)): script, buttons and configuration removed; base-layer copy deleted in the Dockerfile.
+
 
 `ProcessPNPReview:43-82`, `SiteConfig.pm:57` (`$pnp_host_name =
 'pnp-dev.ligo.org'`), `ProjectGlobals.pm:118-120`. For reviewable types the
@@ -346,6 +352,9 @@ package), and until then add `tags_to_callback` for those elements returning
 `DEFANG_ALWAYS`.
 
 ### M2. `CanModify` compares an Author ID with an EmailUser ID [CONFIRMED]
+
+Fixed in Release 3 ([PR #8](https://github.com/cosmic-explorer/ce-docdb/pull/8)): both sites convert with `FetchAuthorIDFromEmailUserID` and never match a zero ID.
+
 
 `Security.pm::CanModify`: `if ($SubmitterID == $EmailUserID)` and
 `if ($Documents{$DocumentID}{Requester} == $EmailUserID)`. `SubmitterID` and
@@ -570,7 +579,7 @@ Fix: encode at output, as `TopicLink` already does.
   authenticator; `LogLevel alert rewrite:trace4` is left on in both short-URL
   configurations. Remove `+Indexes` from `/DocDB`, drop the extra options,
   delete `e-traveler.conf`, lower the log level.
-* **L19** Correctness defects that change behaviour: `MeetingSQL.pm:770/786`
+* **L19** (`MeetingSQL.pm`, `TopicSQL.pm` fixed in Release 2; `TalkHintUtilities.pm`, `SignoffUtilities.pm`, `DisplayMeeting` fixed in Release 3, PR #10; `SignoffSQL.pm:334-350` dead code left) Correctness defects that change behaviour: `MeetingSQL.pm:770/786`
   (`-preample` typo loses the event preamble on create), `MeetingSQL.pm:957`
   (deletes the wrong separator), `MeetingSQL.pm:554` (cache check on the
   wrong hash), `DisplayMeeting:128` (compares with an undefined variable),
@@ -604,15 +613,15 @@ Fix: encode at output, as `TopicLink` already does.
   MySQL `REGEXP`; metacharacters are not escaped, so callers control the
   pattern (expensive or invalid expressions fail silently). POSSIBLE impact
   only.
-* **L25** Public `Search:54-66` redirects to Google with `site:dcc.ligo.org`
+* **L25** (fixed in Release 3, PR #5) Public `Search:54-66` redirects to Google with `site:dcc.ligo.org`
   and the raw query text: every public search on the Cosmic Explorer site
   searches LIGO's DCC. Use the configured host and URL-encode the text.
-* **L26** More LIGO leftovers: `AuthorHTML.pm` mail subjects say `LIGO-`;
+* **L26** (fixed in Release 3, PRs #9 and #11, except `DocDBHelp.xml`, which is LIGO help text throughout and needs a rewrite) More LIGO leftovers: `AuthorHTML.pm` mail subjects say `LIGO-`;
   `ListGroups:342` and `DocDBHelp.xml` link to `dcc.ligo.org`;
   `ProjectRoutines.pm:105` hard-codes group ID 14 as the admin group;
   `ListBy:84` forces the Los Angeles time zone; `GeneralInstructions.pm:162`
   links to Fermilab.
-* **L27** Runtime defects in this area: `SearchAtoms.pm:327-332` uses the key
+* **L27** (fixed in Release 3, PR #9, except `InstitutionAddForm`, `FormElements.pm:634-695` dead code and the `local $SIG{__WARN__}` scoping, which is left alone deliberately because `$UseDeadlyWarning` is 1 and making the handler effective would turn every warning in those scripts into a server error) Runtime defects in this area: `SearchAtoms.pm:327-332` uses the key
   `Numbers` (hash key is `Number`) so number matches get no relevance weight;
   `SetGroups:495` reads `groups` while `SelectGroups` posts `security`, so the
   limiting cookie is always `-1` (unreachable under kerberos validation);
@@ -633,7 +642,7 @@ Fix: encode at output, as `TopicLink` already does.
   and e-mail to any logged-in user. Confirm these are intended.
 * **L29** `SetPrefs` stores `numfile` and `overdate` from the request in
   cookies without bounds; `Cookies.pm` reads them back unchecked.
-* **L30** Three scripts cannot compile in the production image because the
+* **L30** (fixed in Release 3, PR #4, with a local `UntaintParams.pm` instead of installing the module) Three scripts cannot compile in the production image because the
   Perl module `CGI::Untaint` is not installed: `ListEventsBy` (events by topic
   or moderator), `TopicAdminister` (topic administration) and
   `BulkCertificateInsert`. They return a server error whenever invoked and
@@ -727,14 +736,14 @@ run and was replaced by a stdin-based version with his fail-closed checks.
 | F R1 / R O03a | A failed or incomplete inspection could wrongly report that deploying would overwrite no local changes. | fixed in release-2 |
 | F S6c / R RP08 | The public site had a separate copy of a helper and missed fixes applied to the private copy. | fixed in hotfix-release-1 (PR #1) |
 | R D01 | A metadata-only edit can start from reserved version 0, then save over the latest version, replacing its metadata or file selection. | open |
-| R D02 | A failed upload can truncate the existing file and still be reported as successful. | open |
+| R D02 | A failed upload can truncate the existing file and still be reported as successful. | fixed in release-3 (PR #10) |
 | R D03 | A revision is marked obsolete before its replacement is known to have saved; an insertion failure can leave no active revision. | open |
 | R D04 | Two concurrent uploads can choose the same version number and overwrite or hide each other's work. | open |
-| R D05 | A typo sends the wrong certification state with a minor-edit form, so an administrator or certifier can accidentally clear certification. | open |
-| R D06 | Two files with the same final filename in one request can overwrite one another while creating duplicate database rows. | open |
-| R D07 | The direct Add form can omit the document type that its save handler requires. | open |
-| R D08 | The date-override choice can be ignored because the form reads a different variable from the one the preference handler sets. | open |
-| R D09 | Reservation creation sends the word “new” where the database expects a numeric version, giving different results under different database settings. | open |
+| R D05 | A typo sends the wrong certification state with a minor-edit form, so an administrator or certifier can accidentally clear certification. | fixed in release-3 (PR #10) |
+| R D06 | Two files with the same final filename in one request can overwrite one another while creating duplicate database rows. | fixed in release-3 (PR #10) |
+| R D07 | The direct Add form can omit the document type that its save handler requires. | fixed in release-3 (PR #10) |
+| R D08 | The date-override choice can be ignored because the form reads a different variable from the one the preference handler sets. | fixed in release-3 (PR #10) |
+| R D09 | Reservation creation sends the word “new” where the database expects a numeric version, giving different results under different database settings. | fixed in release-3 (PR #10) |
 | R D10a | Cloning or importing a document loses its group authors; even supplied group-author IDs are not saved. | open |
 | R D10b | XML import omits journal references that the export contains. | open |
 | R D11a | Editing a cross-reference can turn an explicitly pinned latest version into a moving “latest” link. | open |
@@ -763,11 +772,11 @@ run and was replaced by a stdin-based version with his fail-closed checks.
 | R C02 | Document-type controls submit a name where the server expects a numeric ID. | fixed in release-2 |
 | R C03 | “All selected authors” searches count repeated relationships rather than distinct selected authors, producing wrong matches. | open |
 | R C04 | Author lists can ignore the requested author order and compare the wrong cached data or row IDs. | open |
-| R C05 | Public search goes to the LIGO site and drops most advanced search choices. | open |
+| R C05 | Public search goes to the LIGO site and drops most advanced search choices. | fixed in release-3 (PR #5) |
 | R C06 | Generic public lists skip fetching their documents, so otherwise valid event/type/all-document views can be empty. | open |
-| R C07 | Changing a result limit or date range drops other search filters. | open |
+| R C07 | Changing a result limit or date range drops other search filters. | fixed in release-3 (PR #9) |
 | R C08 | A supposedly latest-version-only group search can match older versions too. | open |
-| R C09 | Large searches stop before sorting all candidates, so newer or better matches can be omitted. | open |
+| R C09 | Large searches stop before sorting all candidates, so newer or better matches can be omitted. | fixed in release-3 (PR #9) |
 | R C10 | Document-number matches receive the wrong relevance score because the code uses the wrong result list and weight name. | open |
 | R C11 | A dotted first initial, such as “J.”, can prevent a manual author match. | open |
 | R C12a | Invalid author preferences can still change browser cookies before the error is reported. | open |
@@ -809,7 +818,7 @@ run and was replaced by a stdin-based version with his fail-closed checks.
 | R OX05 | Certificate help describes old Fermilab/DOEGrid/LIGO/BTeV processes, not CE onboarding. | open |
 | R MT01 | Deleting an event used its event ID when deleting breaks, risking the wrong break being removed. | fixed in release-2 |
 | R MT02 | Creating an event lost the submitted introductory text. | fixed in release-2 |
-| R MT03 | A break has no alternate-location field, but saving advances the location list for every row; later sessions receive the wrong locations. | open |
+| R MT03 | A break has no alternate-location field, but saving advances the location list for every row; later sessions receive the wrong locations. | fixed in release-3 (PR #10) |
 | R MT04a | Copying an event changes row IDs but leaves moderator, topic and display controls attached to the old IDs. | open |
 | R MT04b | Copying a break can turn it into an ordinary session; copied and new rows can also collide in identity. | open |
 | R MT05 | Conflict detection can miss another edit in the same year and is not enforced atomically when saving. | open |
@@ -983,9 +992,15 @@ downtime for the container restart.
 L9 (remove certificate scripts), L17, L18, and the `LocationMatch`
 tightening in H5 after a test deploy.
 
-**Release 3:** M9 (CSRF tokens, touches every form), M2, M3, M5 (data
-clean-up plus REST API change in ce-it-infrastructure), the L19 defects, and
-the LIGO leftovers.
+**Release 3 (pull requests #4 to #11, opened 2026-10-14):** L30, L25, H10,
+H9, M2, the L27/C07/C09 search-and-listing defects, the D02/D05/D06/D07/D08/
+D09/MT03 add-and-edit defects with the remaining L19 items, and the L26 LIGO
+leftovers. M5 was closed by the data clean-up and the REST API / provisioner
+fixes on 2026-10-14. Still open after Release 3: M9 (CSRF tokens, touches
+every form), M1 (Defang upgrade), M3, the `LocationMatch` tightening in H5,
+D01/D03/D04 (version choice and ordering of writes; need design work),
+DX09 (incomplete delete), `DocDBHelp.xml`, and the appendix rows still
+marked open.
 
 **Outside this repository:** the REST API items A1 to A4 (stop logging tokens,
 check client and scope, make membership inserts idempotent, validate names,
@@ -1007,6 +1022,14 @@ full report was received after an initial truncation; its findings are H1,
 H2, H11, H12, H13, M10, M11, L6, L8, L21 and I1/I2 above.
 
 ## Status of fixes
+
+Release 3 is eight independent pull requests against `main`, each with its
+own regression test and verified to merge together (local integration build
+`cosmicexplorer/dcc:ce-a73343327d3a`, 413 assertions passing, every script
+compiling in the image): #4 L30 `UntaintParams.pm`; #5 L25 public search;
+#6 H10 P&P hook removal; #7 H9 meeting-text escaping; #8 M2 `CanModify`
+IDs; #9 search and listing (L27, C07, C09, footer); #10 add/edit path (D02,
+D05, D06, D07, D08, D09, MT03, L19); #11 L26 LIGO leftovers.
 
 Branch `release-2` (on top of `backport-opendcc`, PR #3) carries the fixes
 taken from the independent review (see the appendix): C01 topic-hierarchy
