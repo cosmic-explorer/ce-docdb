@@ -290,7 +290,6 @@ sub PrintRevisionInfo {
       if (&CanModify($DocumentID,$Version) && !$HideButtons) {
         &UpdateButton($DocumentID, $Version);
         &UpdateDBButton($DocumentID,$Version,$QAState);
-        DisplayReviewButton($DocRevID);
       }
       &AddFilesButton($DocumentID,$Version);
       print "</div>\n";
@@ -301,7 +300,6 @@ sub PrintRevisionInfo {
       if (&CanModify($DocumentID,$Version) && !$HideButtons) {
         &UpdateButton($DocumentID, $Version);
         &UpdateDBButton($DocumentID,$Version,$QAState);
-        DisplayReviewButton($DocRevID);
         if ($Version) {
           &AddFilesButton($DocumentID,$Version);
         }
@@ -312,7 +310,6 @@ sub PrintRevisionInfo {
         print "<div id=\"UpdateButtons\">\n";
         &UpdateButton($DocumentID, $Version);
         &UpdateDBButton($DocumentID,$Version,$QAState);
-        DisplayReviewButton($DocRevID);
         if ($Version) {
           &AddFilesButton($DocumentID,$Version);
         }
@@ -376,46 +373,6 @@ sub PrintRevisionInfo {
 
 }
 
-
-sub DisplayReviewButton{
-  require "SQLUtilities.pm";
-
-  my ($DocRevID)  = @_;
-  my $DocTime     = &EuroDateHM($Documents{$DocumentID}{Date});
-  my $DocumentID  = $DocRevisions{$DocRevID}{DOCID};
-  my $Version     = $DocRevisions{$DocRevID}{VERSION};
-  my $DocTypeID   = $DocRevisions{$DocRevID}{DocTypeID};
-  my $Abstract    = $DocRevisions{$DocRevID}{Abstract};
-  my $ReviewState = $DocRevisions{$DocRevID}{ReviewState};
-    
-  my $DocTypeCheck = 0;
-  my $ReviewDocCheck = 0;
-
-  # First check if the document is the correct type 
-  foreach my $AcceptableDocType (@ReviewableDocTypes) {
-      if ($DocTypeID == $AcceptableDocType) {
-          $DocTypeCheck = 1;
-      }
-  }
-
-  if ($DocTypeCheck) {
-      if ($DocTypeID == $Presentation_DocType) {
-          if ($Abstract ne "") {
-              $ReviewDocCheck = 1;
-          } 
-      }
-      if ($DocTypeID == $Publication_DocType) {
-          my @FileIDs  = &FetchDocFiles($DocRevID);
-          if (@FileIDs) {
-              $ReviewDocCheck = 1;
-          }
-      }
-  }
-  
-  if ($ReviewDocCheck) {
-      &ReviewButton($DocumentID, $Version, $ReviewState);
-  }
-} 
 
 sub DontPrintRevisionInfo($$) { 
    my ($Mode,$documentID) = @_;

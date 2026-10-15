@@ -17,9 +17,11 @@ COPY usr1/www/cgi-bin/ /usr1/www/cgi-bin/
 # COPY merges with the frozen base image and cannot delete files it inherited,
 # so scripts retired by the security hot-fixes are removed explicitly:
 # MigrationHelper (H6, unauthenticated bulk publish), test.pl (L17, Sentry
-# DSN), and three LIGO-era diagnostics that echoed request environment and
-# identity to the browser or to /tmp (auth.sh, test.sh, remote_user.sh).
+# DSN), three LIGO-era diagnostics that echoed request environment and
+# identity to the browser or to /tmp (auth.sh, test.sh, remote_user.sh), and
+# the P&P review hook that exported document metadata to a LIGO host (H10).
 RUN rm -f /usr1/www/cgi-bin/private/DocDB/MigrationHelper \
+          /usr1/www/cgi-bin/private/DocDB/ProcessPNPReview \
           /usr1/www/cgi-bin/test.pl \
           /usr1/www/cgi-bin/private/DocDB/auth.sh \
           /usr1/www/cgi-bin/private/DocDB/test.sh \
