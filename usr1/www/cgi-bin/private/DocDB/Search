@@ -52,17 +52,20 @@ require "HTMLUtilities.pm";
 require "Search.pm";
 
 sub GoogleSearch {
-   my $q = $_[0];
-   
-   my $querydomain = 'site:dcc.ligo.org +';
+   # The public instance has no local search; hand the query to Google
+   # restricted to this site's own host (taken from the configured
+   # $host_name rather than a hard-coded LIGO host) with the text URL-encoded
+   # so that spaces, ampersands and non-ASCII characters survive the redirect.
+   require URI::Escape;
+   my ($q) = @_;
+   $q = "" unless defined $q;
 
-   $q = "$querydomain $q";  
- 
-   print $query->redirect(
-      -uri=>"https://www.google.com/?q=$q");
+   my ($SiteHost) = ($host_name =~ m{\Ahttps?://([^/]+)});
+   $SiteHost = "dcc.cosmicexplorer.org" unless defined $SiteHost && length $SiteHost;
 
-   ## This also works
-   #print $query->header(-Refresh=>"0\;url=https://www.google.com/?q=$q");
+   my $Query = URI::Escape::uri_escape_utf8(length $q ? "site:$SiteHost $q" : "site:$SiteHost");
+
+   print $query->redirect(-uri => "https://www.google.com/search?q=$Query");
 }
 
 $query = new CGI;  # Global for subroutines
