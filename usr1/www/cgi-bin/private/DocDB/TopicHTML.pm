@@ -128,7 +128,7 @@ sub TopicsTable {
   
   my $NCols = 4;
 
-  my %Lists = ();
+  my %List = ();
   my $TotalSize = 0;
   my @RootTopicIDs = sort TopicByAlpha AllRootTopics();
   foreach my $TopicID (@RootTopicIDs) {

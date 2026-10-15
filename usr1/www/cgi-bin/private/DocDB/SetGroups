@@ -40,7 +40,8 @@ $query = new CGI;
 my @cookies = ();
 
 my $Duration = $params{duration};
-my @GroupIDs = split /\0/,$params{groups};
+# SelectGroups posts the list as 'security'; accept the old 'groups' name too.
+my @GroupIDs = split /\0/,(defined $params{groups} ? $params{groups} : (defined $params{security} ? $params{security} : ''));
 unless (@GroupIDs) {
   @GroupIDs = (-1);
 }
