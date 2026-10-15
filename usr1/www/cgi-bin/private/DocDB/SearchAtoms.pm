@@ -329,8 +329,8 @@ sub AddSearchWeights ($) {
   my @Files       = exists $ArgRef->{-files}       ? @{$ArgRef->{-files}}       : ();
   my @Contents    = exists $ArgRef->{-contents}    ? @{$ArgRef->{-contents}}     : ();
 
-  foreach my $DocumentID (@Revisions) {
-     $Documents{$DocumentID}{Relevance} += $SearchWeights{"Numbers"};
+  foreach my $DocumentID (@Numbers) {
+     $Documents{$DocumentID}{Relevance} += $SearchWeights{"Number"};
   }
   foreach my $DocumentID (@Revisions) {
      $Documents{$DocumentID}{Relevance} += $SearchWeights{"Revision"};

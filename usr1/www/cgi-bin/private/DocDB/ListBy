@@ -51,6 +51,20 @@ while (my ($key, $value) = each(%params)) {
 }
 
 
+# Hidden inputs that carry every current filter through the result-limit and
+# "last N days" forms, which previously kept only three of them (C07). The
+# values of %params were HTML-entity encoded above, so they are attribute-safe.
+sub ListByHiddenFilters {
+  my $HTML = "";
+  foreach my $Key (sort keys %params) {
+    next if $Key eq "maxdocs" || $Key eq "days";   # supplied by the forms themselves
+    next unless $Key =~ /\A[a-z0-9_]+\z/i;
+    next unless defined $params{$Key} && length $params{$Key};
+    $HTML .= "<input type=\"hidden\" name=\"$Key\" value=\"$params{$Key}\">\n";
+  }
+  return $HTML;
+}
+
 my $Days         = $params{days}         || 0;
 my $TypeID       = $params{typeid}       || 0;
 my $AuthorID     = $params{authorid}     || 0;
@@ -112,7 +126,7 @@ if ($Days) {
       $Title   = "Documents from Last $Days Days";
       $Message = "These documents have been modified in the last <span class=\"Highlight\">$Days days</span>.";
 #      $List = $dbh -> prepare("select DocRevID AS rev_record from DocumentRevision where Obsolete=0 and TO_DAYS(NOW())-TO_DAYS(TimeStamp)<=? AND NOT EXISTS( select DocRevID from RevisionSecurity where DocRevID=rev_record)");            
-      $List = $dbh -> prepare("select DocRevID from DocumentRevision where Obsolete=0 and TO_DAYS(NOW())-TO_DAYS(TimeStamp)<= ?");
+      $List = $dbh -> prepare("select DocRevID from DocumentRevision where Obsolete=0 and TO_DAYS(NOW())-TO_DAYS(TimeStamp)<= ? order by DocRevID desc");
       $List -> execute($Days);
       my $i = 0;
       while (my ($DocRevID) = $List -> fetchrow_array) {
@@ -121,7 +135,7 @@ if ($Days) {
           # denial of service. - Phil Ehrens
           #
           if ($i > $LOOP_LIMIT) {
-             $i = 0;
+             push @WarnStack,"The listing was cut off after $LOOP_LIMIT most recent candidates; narrow the selection to see the rest.";
              last;
           }
           my $doc_list = $dbh -> prepare ("select DocumentID from DocumentRevision where DocRevID= ?");
@@ -163,7 +177,7 @@ if ($Days) {
   $Title   = "Document List by Topic";
   $List = $dbh -> prepare("select DocumentRevision.DocumentID, DocumentRevision.DocRevID from ".
            "DocumentRevision,RevisionTopic where DocumentRevision.DocRevID=RevisionTopic.DocRevID ".
-           "and DocumentRevision.Obsolete=0 and RevisionTopic.TopicID=?"); 
+           "and DocumentRevision.Obsolete=0 and RevisionTopic.TopicID=? order by DocumentRevision.DocRevID desc"); 
   $i = 0;
   foreach my $ChildTopicID (@ChildTopicIDs) {
     FetchTopic($ChildTopicID);
@@ -174,7 +188,7 @@ if ($Days) {
        # denial of service. - Phil Ehrens
        #
        if ($i > $LOOP_LIMIT) {
-         $i = 0;
+         push @WarnStack,"The listing was cut off after $LOOP_LIMIT most recent candidates; narrow the selection to see the rest.";
          last;
        };
       if (CanAccessRevision($DocRevID)) {
@@ -295,7 +309,7 @@ if ($Days) {
              $DocumentTypes{$TypeID}{SHORT}</span> are available:";
   
   $List = $dbh -> prepare("select DISTINCT(DocumentRevision.DocumentID) from ".
-           "DocumentRevision where DocumentRevision.DocTypeID=?");            
+           "DocumentRevision where DocumentRevision.DocTypeID=? and DocumentRevision.Obsolete=0");            
   $List -> execute($TypeID);
 } elsif ($GroupID || $Group) {
   if ($Group) {
@@ -309,7 +323,7 @@ if ($Days) {
 
   if ($Latest) {
        $Query = "select DISTINCT(DocumentRevision.DocumentID) from DocumentRevision LEFT JOIN RevisionSecurity";
-       $Query .= " ON  DocumentRevision.DocRevID=RevisionSecurity.DocRevID WHERE  RevisionSecurity.GroupID=? AND DocumentRevision.DocRevID IN (SELECT DocRevID from DocumentRevision where DocumentRevision.Obsolete=0 AND VersionNumber IN (SELECT MAX(VersionNumber) from DocumentRevision Group by VersionNumber))  ";
+       $Query .= " ON  DocumentRevision.DocRevID=RevisionSecurity.DocRevID WHERE  RevisionSecurity.GroupID=? AND DocumentRevision.Obsolete=0 AND DocumentRevision.VersionNumber = (SELECT MAX(Latest.VersionNumber) from DocumentRevision Latest where Latest.DocumentID=DocumentRevision.DocumentID and Latest.Obsolete=0)";
   } else {
        $Query = "select DISTINCT(DocumentRevision.DocumentID) from DocumentRevision,RevisionSecurity where DocumentRevision.DocRevID=RevisionSecurity.DocRevID and RevisionSecurity.GroupID=? AND DocumentRevision.Obsolete=0";
   }
@@ -363,7 +377,7 @@ unless (@DocumentIDs) { # Some do their own
             # making the database queries smarter. - Phil Ehrens
             #
             if ($i > $LOOP_LIMIT) {
-               $i = 0;
+               push @WarnStack,"The listing was cut off after $LOOP_LIMIT candidates; narrow the selection to see the rest.";
                last;
             }
             push @DocumentIDs,$DocumentID;
@@ -384,15 +398,7 @@ DocDBHeader($Title,"",-scripts=>["serverstatus", "PopUps", "Throttle", "prototyp
 unless ($Public) {
    require "FormElements.pm";
    print $query -> startform('GET',"ListBy");
-   if ($EventGroupID) {
-      print "<input type=\"hidden\" name=\"eventgroupid\" value=\"$EventGroupID\">\n";
-   }
-   if ($TopicID) {
-      print "<input type=\"hidden\" name=\"topicid\" value=\"$TopicID\">\n";
-   }
-   if ($AuthorID) {
-      print "<input type=\"hidden\" name=\"authorid\" value=\"$AuthorID\">\n";
-   }
+   print ListByHiddenFilters();
    print "<center>\n"; 
    print "<div id='throttle'>\n";
    print "<script>makeThrottleWidget('throttle')</script>\n</div>\n";
@@ -412,6 +418,7 @@ if ($Days) { # Print out modified by form
   if ($Public) {
      require "FormElements.pm";
      print $query -> startform('GET',"ListBy");
+     print ListByHiddenFilters();
      print "<center>\n";
   }
   if ($Uncertified) {

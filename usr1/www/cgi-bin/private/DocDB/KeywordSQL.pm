@@ -148,6 +148,7 @@ sub DeleteKeyword ($) {
     my $KeywordDelete = $dbh -> prepare("delete from Keyword where KeywordID=?");
        $KeywordDelete -> execute($KeywordID);
     my $KeywordGroupingDelete = $dbh -> prepare("delete from KeywordGrouping where KeywordID=?");
+       $KeywordGroupingDelete -> execute($KeywordID);
   }
 }
 

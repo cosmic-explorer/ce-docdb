@@ -102,8 +102,7 @@ sub ProjectFooter {
     }
 ### Only show execution time to members of docdbadm group:
     print "<br>\n";
-    my $find = "14"; #docdbadm
-    if(grep $_ eq $find, @UsersGroupIDs) {
+    if (CanAdminister()) {
        if ($EndTime && $StartTime) {
           my $TimeDiff = timediff($EndTime,$StartTime);
           print "<b>Execution time: </b>",timestr($TimeDiff),"\n";
@@ -158,9 +157,7 @@ print "<ul class=topnav>\n";
         print "<li><a href=\"$SecureMainPage\">Login</a>\n";
   }
   else {
-     if (&CanAdminister()) {
-        print "<li><a href=\"$ShibLogout\">Login</a>\n";
-     }
+     print "<li><a href=\"$ShibLogout\">Logout</a>\n";
      print "<li><a href=\"$WikiHelpPage\">Help</a>\n";
   } 
 # end list

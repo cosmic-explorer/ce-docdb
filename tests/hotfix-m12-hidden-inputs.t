@@ -5,11 +5,15 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 use HotfixTest;
 
+# M12: the ListBy filter inputs must be quoted so a hostile value cannot add
+# attributes. Since C07 the inputs come from ListByHiddenFilters, which
+# emits every current filter.
 use HTML::Entities; use HTML::Parser;
-our ($EventGroupID,$TopicID,$AuthorID);
-$EventGroupID=$TopicID=$AuthorID=HTML::Entities::encode(q{1 extra=value "quoted"});
-my $block=source_between('ListBy','   if ($EventGroupID) {','   print "<center>');
-my $html=capture_output {run_source($block)};
+no strict 'vars';
+my $hostile = HTML::Entities::encode(q{1 extra=value "quoted"});
+%params = (eventgroupid => $hostile, topicid => $hostile, authorid => $hostile);
+load_sub('ListBy', 'ListByHiddenFilters');
+my $html = ListByHiddenFilters();
 my @inputs;
 my $parser=HTML::Parser->new(api_version=>3,start_h=>[sub {my ($tag,$attrs)=@_; push @inputs,$attrs if $tag eq 'input'},'tagname, attr']);
 $parser->parse($html);
