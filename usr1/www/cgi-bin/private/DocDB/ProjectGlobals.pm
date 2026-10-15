@@ -115,9 +115,6 @@ $GroupSuffix = "\@ligo\.org";   # Important: If the group suffix does not match 
 
 $ContentSearch                   =  "/usr/local/bin/glimpse-query.sh";
 $IncrementalContentSearch        =  "/usr/local/bin/glimpse-incr.sh";
-$PNPReviewURL                    =  'https://'.$pnp_host_name.'/Shibboleth.sso/Login?target=https://'.$pnp_host_name.'/';
-$NCatPort                        = 6666;
-$NCatCommand                     =  "/usr/bin/ncat --send-only  ".$pnp_host_name." ".$NCatPort;
 
 if ($Public) {
      $ContentSearchReturns       =  "/usr1/www/html/DocDB";;
@@ -153,7 +150,5 @@ $Publication_DocType  = 8;     # P - documents
 
 $ReviewAsOf = "2014-08-01";
 
-$InitiatePnP = "Initiate P&P Review";
-$GotoPnPSite = "Go to P&P Website";
 
 1;

@@ -201,7 +201,6 @@ $ShowDocument          = $cgi_root."ShowDocument";
 $SecureShowDocument    = $secure_root."ShowDocument";
 $RetrieveFile          = $cgi_root."RetrieveFile";
 $RetrieveArchive       = $cgi_root."RetrieveArchive";
-$ProcessPNPReview      = $cgi_root."ProcessPNPReview";
 
 $XSearch               = $cgi_root."XSearch";
 $Search                = $cgi_root."Search";

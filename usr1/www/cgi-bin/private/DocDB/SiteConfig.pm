@@ -56,7 +56,6 @@ $secure_root     = $host_name."private/DocDB";
 #
 $DocDBHome = $host_name."/wiki/index.php/Main_Page";
 
-$pnp_host_name = 'pnp-dev.ligo.org';
 
 $WelcomeMessage = "This is the repository of $Project talks, publications, and other documents.";
 

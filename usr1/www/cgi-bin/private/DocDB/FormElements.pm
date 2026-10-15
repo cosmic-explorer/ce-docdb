@@ -437,48 +437,6 @@ sub QAButton {
 
   $query -> param('mode', 'update');
 }
-
-sub ReviewButton {
-  require "DocumentSQL.pm"; 
-  require "DocumentReviewSQL.pm";
-
-  my ($DocumentID, $Version, $ReviewStatus) = @_;
-
-  $query -> param('docid',  $DocumentID);
-  $query -> param('version',$Version);
-  $query -> param('reviewstat', $ReviewStatus);
-  $query -> param('mode',  'review');
-
-  my $DocumentAlias = FetchDocumentAlias($DocumentID);
-  my $DocumentState = FetchDocumentReview($DocumentID, $Version);
-  my $FilesChanged  = CheckFiles($DocRevID);
-
-#  my $ReviewDocumentURL = $PNPReviewURL.$DocumentAlias;
-#  #  print $query -> startform('POST',$ReviewDocumentURL);
-#
-  print $query -> startform('POST', $ProcessPNPReview);
-  print "<div>\n";
-
-  if ($DocumentState == 0 || $DocumentState == 4) {
-      print $query -> submit (-value => $InitiatePnP);
-      $FilesChanged = 1;
-  }
-  else {
-      print $query -> submit (-value => $GotoPnPSite);
-  }
-  print $query -> hidden(-name => 'docrevid', -default => $DocRevID);
-  print $query -> hidden(-name => 'docid',    -default => $DocumentID);
-  print $query -> hidden(-name => 'version',  -default => $Version);
-  print $query -> hidden(-name => 'alias',    -default => $DocumentAlias);
-  print $query -> hidden(-name => 'mode',     -default => 'review');
-  print $query -> hidden(-name => 'importxml',-default => $FilesChanged);
-
-  print "\n</div>\n";
-  print $query -> endform;
-  print "\n";
-
-  $query -> param('mode', 'update');
-}
                          
 
 sub LoginToPrivateSiteButton {
