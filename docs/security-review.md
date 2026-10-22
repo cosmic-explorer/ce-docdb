@@ -1009,6 +1009,24 @@ block only redirects to HTTPS, so that PHP is unreachable; replacing the
 deprecated `linuxserver/letsencrypt` image with `linuxserver/swag` is a
 separate follow-up.
 
+### N2. Unanchored `/public` LocationMatch skipped the login for any URL containing `/public` [CONFIRMED, fixed]
+
+Reported by Dan (security team) 2026-10-22 and confirmed: both
+`dcc-dev.conf` and `short_urls.public.conf` granted anonymous access with
+`<LocationMatch "^/(.+)/public">`, which matches any path containing
+`/public`. An anonymous request to `/wiki/index.php/public` therefore ran
+the bundled MediaWiki (response carried `X-Powered-By: PHP/7.2.10`), which
+made N1 reachable without a login, and any stored file whose path contains
+`/public` was served anonymously. Fix: both patterns are anchored to the
+public-document short-URL form,
+`(?i)^/(CE-)?([A-Z]\d{6,7}|\d+)(-[vx])?(\d+)?(/main)?/public(/|$)`,
+tested in `tests/release3-n2-public-locationmatch.t`. The `|d+` typo in
+`CE_DOCUMENT_PATTERN` (meant `|\d+`) is fixed in both short-URL files. Dan
+found no sign of exploitation in the logs since the 15 October redeploy,
+but the access log records only the Swarm ingress address, so client IPs
+are not available (follow-up: pass the real client address through, or log
+`X-Forwarded-For` at the ingress).
+
 ## Remediation plan
 
 **Release 1 (hot-fix, same day it can be scheduled):** C1, C2, C3, H1, H2,
