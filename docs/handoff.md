@@ -6,6 +6,16 @@ unless stated.
 
 ## Production state
 
+**2026-10-22, PHP removal (PR pending merge/deploy):** branch `fix-remove-php`,
+image `cosmicexplorer/dcc:ce-5822e61e1fc8`, removes mod_php 7.2.10, MediaWiki,
+phpMyAdmin and the `php___myadmin -> /usr1/www` symlink from the image and sets
+`ServerTokens Prod` (review finding N1, prompted by the PHP2Shell advisory
+scan that flagged ce-dcc). Verified offline: no PHP artefacts, Apache config
+parses through the real entrypoint, Perl untouched. Needs a deploy window.
+Follow-ups: dump and drop `wikidb`; repoint the "Help" links (`$WikiHelpPage`,
+`$DocDBHome`) that target the removed wiki; replace `linuxserver/letsencrypt`
+with `linuxserver/swag` (php-fpm 7.3.25 inside, unreachable).
+
 **Deployed 2026-10-15 (Release 3):** `dcc_dcc` runs `cosmicexplorer/dcc:ce-3f009b06f264`
 (`main` 3f009b0, PRs #4 to #12). Public instance verified after the roll:
 search redirect scoped to dcc.cosmicexplorer.org with the query encoded,

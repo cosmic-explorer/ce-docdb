@@ -46,4 +46,19 @@ COPY etc/shibboleth-ds/ /etc/shibboleth-ds/
 COPY usr/local/ /usr/local/
 COPY etc/cron.daily/ /etc/cron.daily/
 
+# PHP is not used by the DCC (Perl CGI). The base image carried mod_php
+# 7.2.10 from the defunct IUS repository (end of life 2020, no fix for the
+# 2026 PHP2Shell flaws exists below 8.2), a MediaWiki 1.29.1 tree whose
+# database host no longer exists, two phpMyAdmin trees, and symlinks from the
+# web root into /usr1/www. Remove the interpreter, the module and the PHP
+# applications, and stop advertising PHP in the Server header
+# (ServerTokens Prod in etc/httpd/conf/httpd.conf).
+RUN rpm -e $(rpm -qa 'php72u*' 'mod_php72u*') && \
+    rm -rf /usr1/www/html/mediawiki-1.29.1 /usr1/www/html/wiki \
+           /usr1/www/html/phpMyAdmin-2.11.9.2 /usr1/www/html/phpMyAdmin-4.0.10.20-english \
+           /usr1/www/html/php___myadmin \
+           /etc/httpd/conf.d/php.conf /etc/httpd/conf.modules.d/15-php.conf \
+           /var/lib/php && \
+    ! test -e /usr/bin/php && ! test -e /usr/lib64/httpd/modules/libphp7.so
+
 # ENTRYPOINT (supervisord) is inherited from the base image.

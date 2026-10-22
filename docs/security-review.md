@@ -980,6 +980,35 @@ findings; most Critical and High items are still present there, while H8, H13
 and much of L14 are fixed. See [upstream-opendcc.md](upstream-opendcc.md) for
 the table and for what is worth back-porting.
 
+## Findings added after the review
+
+### N1. PHP 7.2.10, MediaWiki and phpMyAdmin shipped in the image, reachable by any federated login [CONFIRMED, fixed]
+
+Found 2026-10-22 while assessing the PHP2Shell advisory (CVE-2026-109618,
+CVE-2026-109619; fixes exist only for PHP 8.2.35+/8.3.36+/8.4.27+/8.5.12+).
+The DCC uses no PHP, but the base image loaded `mod_php` 7.2.10 from the
+defunct IUS repository (end of life November 2020) into Apache, and the
+DocumentRoot `/usr1/www/html` held `mediawiki-1.29.1` (with a 2017
+`LocalSettings.php` pointing at a database host that does not exist in the
+container, so the wiki has not worked since the move to Docker),
+`phpMyAdmin-2.11.9.2`, `phpMyAdmin-4.0.10.20-english` and a symlink
+`php___myadmin -> /usr1/www` that, with `Options Indexes FollowSymLinks` on
+the web root, exposed the whole `/usr1/www` tree including the CGI source.
+Everything under `/` requires a Shibboleth session, so the exposure was to
+any InCommon or ORCID login, not to anonymous visitors. The `Server` header
+advertised `PHP/7.2.10 mod_perl/2.0.10 OpenSSL/1.0.2k-fips`, which is what
+the security team's scan matched. No fixed PHP exists for this platform, so
+the remediation is removal: the Dockerfile uninstalls the PHP packages,
+deletes the PHP applications and the symlink, `php.conf`/`15-php.conf` are
+no longer shipped, `index.php` is dropped from `DirectoryIndex`, and
+`ServerTokens Prod` / `ServerSignature Off` hide the banner. The `wikidb`
+database remains in MariaDB as data (never reachable from outside); it can
+be dumped and dropped later. The `letsencrypt` container runs php-fpm 7.3.25
+behind its own nginx, but only its port 80 is published and that server
+block only redirects to HTTPS, so that PHP is unreachable; replacing the
+deprecated `linuxserver/letsencrypt` image with `linuxserver/swag` is a
+separate follow-up.
+
 ## Remediation plan
 
 **Release 1 (hot-fix, same day it can be scheduled):** C1, C2, C3, H1, H2,
