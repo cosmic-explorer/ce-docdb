@@ -6,14 +6,16 @@ unless stated.
 
 ## Production state
 
-**2026-10-22, /public login bypass (N2, PR pending):** branch
-`fix-public-locationmatch`, image `cosmicexplorer/dcc:ce-a96d415d3648` (includes
-the merged PHP removal). Deploy this one; it supersedes `ce-e5f20fe0c6a0`.
-After deploy: `/wiki/index.php/public` and `/DocDB/0001/publiczz.pdf` must
-redirect to the login, `/CE-P2100003/public` must still open anonymously.
+**Deployed 2026-10-22, PHP removal + /public fix:** `dcc_dcc` runs
+`cosmicexplorer/dcc:ce-c61dab4a30f0` (`main` c61dab4, PRs #13 and #14; findings
+N1 and N2). Verified after the roll: no PHP packages in the image; `Server:
+Apache` only; `/wiki/index.php/public`, `/DocDB/0001/publiczz.pdf` and
+`/mediawiki-1.29.1/index.php` no longer return PHP output (they are now
+behind the login); `/CE-P2100003/public` still redirects to the public file;
+public pages 200. Tag pinned in a ce-it-infrastructure PR. Previous image
+`ce-3f009b06f264` kept for rollback. Dan (security team) to re-scan.
 
-**2026-10-22, PHP removal (PR #13 merged, image `ce-e5f20fe0c6a0` built, not deployed):** branch `fix-remove-php`,
-image `cosmicexplorer/dcc:ce-5822e61e1fc8`, removes mod_php 7.2.10, MediaWiki,
+**PHP removal details (PR #13, deployed as part of the image above):** removes mod_php 7.2.10, MediaWiki,
 phpMyAdmin and the `php___myadmin -> /usr1/www` symlink from the image and sets
 `ServerTokens Prod` (review finding N1, prompted by the PHP2Shell advisory
 scan that flagged ce-dcc). Verified offline: no PHP artefacts, Apache config
