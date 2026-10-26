@@ -170,3 +170,47 @@ Docker 19.03 starts at boot and Swarm restores all services from their stored
 specs, so after a reboot the stack returns by itself (verify with
 `docker stack ps dcc`). Never prune images with `-a`; the DCC images exist
 only on this host.
+
+### SSH daemon (OpenSSH 10.6p1 from source)
+
+Since 2026-10-26 port 22 is served by OpenSSH 10.6p1 built from the
+signature-verified upstream tarball, not by the distro `openssh-server-7.8p1`
+package. A Nessus scan (2026-10-24) flagged the 7.8 banner against the
+OpenSSH 10.3/10.4 advisories and the vault repositories only offer 8.0p1.
+
+- Install prefix `/usr/local/openssh-10.6p1`; configuration in
+  `/usr/local/openssh-10.6p1/etc/sshd_config` (derived from the distro file:
+  key-only logins, root permitted with keys only, PAM, GSSAPI, X11, internal
+  sftp; 10.6 default ciphers rather than the EL8 crypto-policy string).
+- Host keys are copies of `/etc/ssh/ssh_host_*_key` with mode 0600 (upstream
+  sshd rejects Red Hat's 0640 group-readable keys), so fingerprints and client
+  `known_hosts` entries are unchanged.
+- The stock `sshd.service` is redirected by the drop-in
+  `/etc/systemd/system/sshd.service.d/openssh-10.6p1.conf` (`Type=simple`;
+  upstream sshd has no sd_notify). Check config with
+  `/usr/local/openssh-10.6p1/sbin/sshd -t -f /usr/local/openssh-10.6p1/etc/sshd_config`.
+- **Rollback:** delete the drop-in, `systemctl daemon-reload`,
+  `systemctl restart sshd`; the distro binary and `/etc/ssh` are untouched.
+  Restarting sshd does not drop existing sessions (`KillMode=process`).
+- The build tree is not kept; rebuild from a verified tarball with
+  `./configure --prefix=/usr/local/openssh-<ver> --sysconfdir=/usr/local/openssh-<ver>/etc --with-pam --with-privsep-path=/var/empty/sshd --with-privsep-user=sshd --with-kerberos5 --with-md5-passwords --with-pid-dir=/run`
+  (needs `pam-devel`, `openssl-devel`, `krb5-devel`, `zlib-devel`, `gcc`).
+  Upgrade by installing a new prefix, copying `etc/`, and editing the two
+  paths in the drop-in.
+
+### SSH firewall
+
+Port 22 accepts new connections only from 128.230.0.0/16 (SU campus) and
+10.57.0.0/16 (SU VPN); every recorded login came from these ranges. The rule
+is the nftables table `inet ce_dcc_ssh` in `/etc/nftables/ce-dcc-ssh.nft`,
+loaded at boot by `ce-dcc-ssh-firewall.service` (enabled). Blocked attempts
+are counted and logged to the kernel log as `ce-dcc ssh blocked:` (rate
+limited). Established sessions are never filtered.
+
+- Edit the `ssh_allowed_v4` set in the file, then
+  `nft delete table inet ce_dcc_ssh; nft -f /etc/nftables/ce-dcc-ssh.nft`.
+- Inspect: `nft list table inet ce_dcc_ssh`.
+- **Never `systemctl stop|restart nftables`** (the distro unit, which is not
+  enabled): its `ExecStop`/`ExecReload` run `nft flush ruleset`, which also
+  removes Docker's `ip filter`/`ip nat` tables and breaks Swarm networking.
+  Our table coexists with Docker's and never flushes anything.

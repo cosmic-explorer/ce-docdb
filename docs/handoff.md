@@ -1,10 +1,22 @@
-# Handoff: state of work as of 2026-10-14
+# Handoff: state of work as of 2026-10-26
 
 For a new maintainer or a fresh Claude Code session. Everything below is
 verifiable from the repository, GitHub and the host; nothing is deployed
 unless stated.
 
 ## Production state
+
+**Host, 2026-10-26 (OpenSSH + firewall, no container change):** a Nessus
+scan of 2026-10-24 flagged `OpenSSH_7.8` on tcp/22 (advisories fixed in
+OpenSSH 10.3/10.4; vault only offers 8.0p1). Port 22 now runs OpenSSH
+10.6p1 built from the GPG-verified upstream tarball under
+`/usr/local/openssh-10.6p1`, started by the stock `sshd.service` through a
+drop-in; same host keys, key-only root login as before. New SSH connections
+are restricted to 128.230.0.0/16 and 10.57.0.0/16 by the nftables table
+`inet ce_dcc_ssh` (`ce-dcc-ssh-firewall.service`), tested from an allowed and
+a blocked source address. Details, rollback and the "never restart
+`nftables.service`" warning are in `docs/operations.md` ("SSH daemon",
+"SSH firewall"). Dan (security team) to re-scan.
 
 **Deployed 2026-10-22, PHP removal + /public fix:** `dcc_dcc` runs
 `cosmicexplorer/dcc:ce-c61dab4a30f0` (`main` c61dab4, PRs #13 and #14; findings
@@ -148,6 +160,10 @@ local-only image works but prints a registry warning; that is expected.
   L30 is fixed in code by PR #4).
 - Report the still-present upstream defects to the open-DCC maintainers
   (`docs/upstream-opendcc.md`).
+- Host OpenSSH is now a source build outside package management: watch the
+  openssh-unix-announce list and rebuild into a new prefix on the next
+  security release (recipe in `docs/operations.md`). The real fix remains a
+  host rebuild on a supported OS.
 
 ## Things that were tried and blocked
 
