@@ -31,7 +31,7 @@ defined in
 | `dcc_oauth-server` | `oryd/hydra:v1.0.8` | OAuth2 server protecting the REST API. Public endpoints proxied at `/oauth/`; admin API on port 4445 reachable only on the stack network. |
 | `dcc_oauth-consent` | `cosmicexplorer/hydra-login-consent-node` | Hydra login/consent app. Proxied at `/login` and `/consent`; `/login` is restricted by Apache to a Shibboleth session with an allow-listed eduPersonPrincipalName. |
 | `dcc_oauth-database` | `postgres:9.6` | Hydra's database. |
-| `dcc_letsencrypt` | `linuxserver/letsencrypt` | Obtains and renews the TLS certificate (HTTP-01 on port 80). The `dcc` container mounts the resulting certificate directory. |
+| `dcc_letsencrypt` | `linuxserver/swag:5.9.0-ls497` (since 2026-11-05; formerly `linuxserver/letsencrypt`) | Obtains and renews the TLS certificate (HTTP-01 on port 80) and redirects HTTP to HTTPS. The `dcc` container mounts the resulting certificate directory. |
 
 Inside `dcc_dcc`, `supervisord` runs three programs (`usr/local/etc/supervisord.conf`):
 `httpd` in the foreground, `shibd` (the Shibboleth SP daemon) and `crond`.

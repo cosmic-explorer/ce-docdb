@@ -1005,9 +1005,12 @@ no longer shipped, `index.php` is dropped from `DirectoryIndex`, and
 database remains in MariaDB as data (never reachable from outside); it can
 be dumped and dropped later. The `letsencrypt` container runs php-fpm 7.3.25
 behind its own nginx, but only its port 80 is published and that server
-block only redirects to HTTPS, so that PHP is unreachable; replacing the
-deprecated `linuxserver/letsencrypt` image with `linuxserver/swag` is a
-separate follow-up.
+block only redirects to HTTPS, so that PHP is unreachable. That follow-up
+was done 2026-11-05: the service now runs `linuxserver/swag:5.9.0-ls497`
+(PHP 8.5.12, fixed for CVE-2026-109618/109619) with a redirect-only site
+conf and no PHP handler at all, and `session.upload_progress.enabled = 0`
+per PHP's 2026-10-23 advisory (CVE-2026-115560). No PHP runtime older than
+the fixed releases remains anywhere in the stack or on the host.
 
 ### N2. Unanchored `/public` LocationMatch skipped the login for any URL containing `/public` [CONFIRMED, fixed]
 

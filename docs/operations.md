@@ -129,6 +129,32 @@ does `httpd -k graceful` daily so Apache reloads it. If the certificate on
 the site is stale, check the letsencrypt service log, then run the graceful
 reload by hand with `docker exec <dcc container> /etc/cron.daily/renew-certs.sh`.
 
+Since 2026-11-05 the service runs `linuxserver/swag:5.9.0-ls497` (the
+successor of the retired `linuxserver/letsencrypt` image, which carried PHP
+7.3 with no PHP2Shell fix). It does two things only: certbot renewal in
+http-01 standalone mode (cron twice daily; the hooks in
+`config/etc/letsencrypt/renewal-hooks/` stop and restart nginx around it) and
+the port-80 redirect to https. `config/nginx/site-confs/default.conf` is a
+redirect-only server block with no PHP handler; swag keeps it as long as it
+exists, and warns at start that it differs from the shipped sample, which is
+expected. `config/php/php-local.ini` sets `session.upload_progress.enabled = 0`.
+
+- Test renewal end to end without touching the real certificate:
+  `docker exec <letsencrypt container> certbot renew --dry-run --config-dir /config/etc/letsencrypt --logs-dir /config/log/letsencrypt --work-dir /tmp/letsencrypt --config /config/etc/letsencrypt/cli.ini`
+  (nginx is down for a few seconds; the DCC on 443 is unaffected).
+- **Upgrading swag:** Docker 19.03 on this host cannot pull swag's OCI
+  manifests (`mediaType in manifest should be ...`). Import with
+  `skopeo copy docker://docker.io/linuxserver/swag:<tag> docker-daemon:linuxserver/swag:<tag>`
+  (skopeo installed 2026-11-05), then
+  `docker service update --no-resolve-image --image linuxserver/swag:<tag> dcc_letsencrypt`
+  and pin the tag in ce-it-infrastructure `dcc/dcc.yml`. A plain
+  `docker stack deploy` needs `--resolve-image never` for this service.
+- **Rollback:** `docker service update --rollback dcc_letsencrypt` (the old
+  image is kept locally as `linuxserver/letsencrypt:latest`) and restore
+  `/srv/docker/dcc/letsencrypt/config.pre-swag-2026-11-05` over `config`;
+  the old image needs the 2019 nginx directory and inline certbot hooks that
+  the backup contains.
+
 ## Shibboleth
 
 * SP configuration is bind-mounted from `/srv/docker/dcc/etc/shibboleth/`

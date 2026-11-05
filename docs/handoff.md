@@ -6,6 +6,18 @@ unless stated.
 
 ## Production state
 
+**Stack, 2026-11-05 (letsencrypt container replaced, no DCC restart):**
+`dcc_letsencrypt` now runs `linuxserver/swag:5.9.0-ls497` (PHP 8.5.12,
+certbot 5.9.0) instead of the 2021 `linuxserver/letsencrypt` image with PHP
+7.3.25, the last PHP runtime in the stack. The site conf is redirect-only
+with no PHP handler. Verified: port 80 redirects, `certbot renew --dry-run`
+against the staging CA succeeded with swag's hooks, the DCC container kept
+running and serves the certificate expiring 2026-12-12 (real renewal due
+around 2026-11-12; check `config/log/letsencrypt/renewal.log` after that).
+Pinned in ce-it-infrastructure PR #11. Config backup
+`/srv/docker/dcc/letsencrypt/config.pre-swag-2026-11-05`; recipe and the
+Docker 19.03 / skopeo caveat in `docs/operations.md` ("TLS certificate").
+
 **Host, 2026-10-26 (OpenSSH + firewall, no container change):** a Nessus
 scan of 2026-10-24 flagged `OpenSSH_7.8` on tcp/22 (advisories fixed in
 OpenSSH 10.3/10.4; vault only offers 8.0p1). Port 22 now runs OpenSSH
@@ -33,8 +45,9 @@ phpMyAdmin and the `php___myadmin -> /usr1/www` symlink from the image and sets
 scan that flagged ce-dcc). Verified offline: no PHP artefacts, Apache config
 parses through the real entrypoint, Perl untouched. Needs a deploy window.
 Follow-ups: dump and drop `wikidb`; repoint the "Help" links (`$WikiHelpPage`,
-`$DocDBHome`) that target the removed wiki; replace `linuxserver/letsencrypt`
-with `linuxserver/swag` (php-fpm 7.3.25 inside, unreachable).
+`$DocDBHome`) that target the removed wiki. The `linuxserver/letsencrypt`
+replacement (php-fpm 7.3.25 inside, unreachable) was done 2026-11-05, see
+below.
 
 **Deployed 2026-10-15 (Release 3):** `dcc_dcc` runs `cosmicexplorer/dcc:ce-3f009b06f264`
 (`main` 3f009b0, PRs #4 to #12). Public instance verified after the roll:
