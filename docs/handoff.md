@@ -6,6 +6,18 @@ unless stated.
 
 ## Production state
 
+**Pending deploy (2026-11-16, outgoing mail):** branch `fix-smtp-relay`
+(PR to come) moves the SMTP relay to `$MailServer` in `SiteConfig.pm`
+(`smtp-relay.syr.edu`), uses it in `Utilities.pm` `send_email` and in
+`EmailUtilities.pm` `SendEmail` (which had no server at all and so never
+delivered access-request mail), and makes a mail failure non-fatal for the
+access-request page. Reported by Dan Jeski (ITS): no notification mail since
+2026-10-23 because `smtp-host.syr.edu` left campus DNS. ce-it-infrastructure
+PR #12 fixes the base-image `sed` to match. Needs a scheduled deploy window
+(shibd start-up applies). After the deploy, confirm by saving a document
+change with notifications on and watching for `DCC ERROR` lines in the
+error log; `docs/operations.md` "Outgoing mail" has the connectivity check.
+
 **Stack, 2026-11-05 (letsencrypt container replaced, no DCC restart):**
 `dcc_letsencrypt` now runs `linuxserver/swag:5.9.0-ls497` (PHP 8.5.12,
 certbot 5.9.0) instead of the 2021 `linuxserver/letsencrypt` image with PHP

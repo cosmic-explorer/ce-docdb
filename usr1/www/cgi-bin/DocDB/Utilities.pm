@@ -110,8 +110,10 @@ sub send_email {
       ],
       body => $msg,
     );
+    # $MailServer comes from SiteConfig.pm; the literal is a last resort so a
+    # SiteConfig without it still reaches the campus relay.
     my $transport = Email::Sender::Transport::SMTP->new({
-        host => 'smtp-host.syr.edu',
+        host => $MailServer || 'smtp-relay.syr.edu',
         port => 25,
     });
     try {

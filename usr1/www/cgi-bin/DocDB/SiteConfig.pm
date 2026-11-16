@@ -73,7 +73,8 @@ $ReadOnly       = 0;            # Can be used in conjunction with individual
 
 #$UseSignoffs          = 0;     # Sign-off system for document approval
 #$MailInstalled        = 1;     # Is the Mailer::Mail module installed?
-#$MailServer           = "";
+$MailServer           = "smtp-relay.syr.edu"; # campus SMTP relay, port 25, no auth
+                                # (the previous relay name left campus DNS in 2026-10)
 
 # These settings are for public version of DB. Uncomment these five lines
 # for the version of this file you place in the public area. While only the
