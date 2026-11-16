@@ -34,17 +34,29 @@ sub SendEmail (%) {
    
   if (@Addressees) {
     print "Sending mail to: ",join ", ",@Addressees,"<br/>\n";
-    my $Mailer = new Mail::Mailer 'smtp';
-
-#   MCA: Resolve some mail problems    
-#   my $Mailer = new Mail::Mailer 'smtp', Server => $MailServer;
     $Headers{To}      = \@Addressees;
     $Headers{From}    = $From;
     $Headers{Subject} = $Subject;
-    
-    $Mailer -> open(\%Headers);    # Start mail with headers
-    print $Mailer $Body;
-    $Mailer -> close;              # Complete the message and send it
+
+    # Send through the relay named in SiteConfig.pm ($MailServer). Without a
+    # server Mail::Mailer tries no host at all (nothing listens on port 25 in
+    # the container), so the access-request mail never left. A failure is
+    # reported instead of aborting the page: by the time this runs the
+    # request has already been recorded.
+    my @Server = $MailServer ? (Server => $MailServer) : ();
+    eval {
+      my $Mailer = new Mail::Mailer 'smtp', @Server;
+      $Mailer -> open(\%Headers);    # Start mail with headers
+      print $Mailer $Body;
+      $Mailer -> close;              # Complete the message and send it
+      1;
+    } or do {
+      my $Error = $@ || "unknown error";
+      $Error =~ s/\s+/ /g;
+      warn "DCC ERROR: SendEmail failed: $Error";
+      print "<b>Warning:</b> the notification e-mail could not be sent; the administrators have been informed through the server log.<br/>\n";
+      return 0;
+    };
   }
   return int(@Addressees);
 }

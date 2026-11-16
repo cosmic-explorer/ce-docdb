@@ -179,6 +179,28 @@ register a new OAuth2 client use `register-client.sh` in the
 ce-it-infrastructure repository. Hydra's admin API (port 4445) is reachable
 only from containers on the `dcc_dcc-net` network.
 
+## Outgoing mail
+
+Notification mail (new and updated documents, signoff "ready for signature"
+and "approved" notices) goes out through `send_email` in `Utilities.pm`
+(Email::Sender over SMTP); access-request mail from `UserAccessApply` goes
+through `SendEmail` in `EmailUtilities.pm` (Mail::Mailer). Both use the
+relay named by `$MailServer` in `SiteConfig.pm`, `smtp-relay.syr.edu`, port
+25, no authentication; the container has no local MTA. The previous name
+`smtp-host.syr.edu` disappeared from campus DNS in October 2026 and no mail
+was delivered from 2026-10-23 until the fix was deployed (reported by ITS).
+
+- Failures are logged as `DCC ERROR: sendmail failed` / `DCC ERROR:
+  SendEmail failed` in the Apache error log and via syslog inside the
+  container; a signoff that is waiting on a notification can be nudged by
+  the next signer directly from the document page.
+- Quick connectivity check from inside the DCC container:
+  `docker exec <dcc container> perl -MIO::Socket::INET -e '$s=IO::Socket::INET->new(PeerAddr=>"smtp-relay.syr.edu",PeerPort=>25,Timeout=>5) or die $@; print scalar <$s>'`
+  should print a `220 smtp-relay.syr.edu ESMTP` banner.
+- If ITS renames the relay again: change `$MailServer` in both copies of
+  `SiteConfig.pm`, rebuild, deploy. `tests/smtp-relay.t` checks both mail
+  paths honour it.
+
 ## Secrets
 
 Swarm secrets are immutable. To rotate one: create a new secret with a new
