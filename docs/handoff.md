@@ -1,4 +1,4 @@
-# Handoff: state of work as of 2026-10-26
+# Handoff: state of work as of 2026-11-16
 
 For a new maintainer or a fresh Claude Code session. Everything below is
 verifiable from the repository, GitHub and the host; nothing is deployed
@@ -6,17 +6,21 @@ unless stated.
 
 ## Production state
 
-**Pending deploy (2026-11-16, outgoing mail):** branch `fix-smtp-relay`
-(PR to come) moves the SMTP relay to `$MailServer` in `SiteConfig.pm`
-(`smtp-relay.syr.edu`), uses it in `Utilities.pm` `send_email` and in
-`EmailUtilities.pm` `SendEmail` (which had no server at all and so never
-delivered access-request mail), and makes a mail failure non-fatal for the
-access-request page. Reported by Dan Jeski (ITS): no notification mail since
-2026-10-23 because `smtp-host.syr.edu` left campus DNS. ce-it-infrastructure
-PR #12 fixes the base-image `sed` to match. Needs a scheduled deploy window
-(shibd start-up applies). After the deploy, confirm by saving a document
-change with notifications on and watching for `DCC ERROR` lines in the
-error log; `docs/operations.md` "Outgoing mail" has the connectivity check.
+**Deployed 2026-11-16, outgoing mail:** `dcc_dcc` runs
+`cosmicexplorer/dcc:ce-442af14cc494` (`main` 442af14, PR #15). The SMTP
+relay is now `$MailServer` in `SiteConfig.pm` (`smtp-relay.syr.edu`), used by
+`Utilities.pm` `send_email` and by `EmailUtilities.pm` `SendEmail` (which had
+no server at all and so never delivered access-request mail); a relay failure
+on the access-request page is logged and shown instead of aborting the page.
+Reported by Dan Jeski (ITS): no notification mail since 2026-10-23 because
+`smtp-host.syr.edu` left campus DNS. ce-it-infrastructure PR #12 (merged)
+fixes the base-image `sed`; PR #13 pins the new tag in `dcc.yml`. Verified
+after the roll: no drift, the new container resolves the relay (four A
+records) and gets its `220 ESMTP Postfix` banner from Perl, site 200.
+Still to confirm with real traffic: save a document change with
+notifications on and check that no `DCC ERROR` lines appear in the error
+log, then tell Dan. Previous image `ce-c61dab4a30f0` kept for rollback.
+`docs/operations.md` "Outgoing mail" has the connectivity check.
 
 **Stack, 2026-11-05 (letsencrypt container replaced, no DCC restart):**
 `dcc_letsencrypt` now runs `linuxserver/swag:5.9.0-ls497` (PHP 8.5.12,
